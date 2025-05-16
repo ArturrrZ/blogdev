@@ -29,13 +29,15 @@ ALLOWED_HOSTS = []
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "api.authentication.JWTAuthenticationFromCookie",
     ),
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
 }
 SIMPLE_JWT = {
+    'BLACKLIST_AFTER_ROTATION': False,
+    'ROTATE_REFRESH_TOKENS': False,  
     "ACCESS_TOKEN_LIFETIME": timedelta(seconds=60*60*24*1),
     "REFRESH_TOKEN_LIFETIME": timedelta(seconds=60*60*24*60),
 }
@@ -49,7 +51,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'api'
+    'api',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
