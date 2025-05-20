@@ -8,6 +8,8 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from .serializers import CustomUserSerializer
+from django.conf import settings
+
 # Create your views here.
 
 @api_view(['GET'])
@@ -47,7 +49,7 @@ class LoginLogoutView(APIView):
         response.set_cookie(
             key="access_token",
             value=access_token,
-            max_age= 60*60*24*1,
+            max_age= settings.ACCESS_TOKEN_LIFETIME,
             secure=True,
             httponly=True,
             samesite="Lax"
@@ -55,7 +57,7 @@ class LoginLogoutView(APIView):
         response.set_cookie(
             key="refresh_token",
             value=refresh_token,
-            max_age= 60*60*24*60,
+            max_age= settings.REFRESH_TOKEN_LIFETIME,
             secure=True,
             httponly=True,
             samesite="Lax"
@@ -70,7 +72,7 @@ class LoginLogoutView(APIView):
             except (TokenError, InvalidToken):
                 pass  # Можно логировать или просто игнорировать
 
-        response = Response({"You logged out!"}, status=status.HTTP_200_OK)
+        response = Response({"message":"You logged out!"}, status=status.HTTP_200_OK)
         response.delete_cookie("access_token")
         response.delete_cookie("refresh_token")
         return response
@@ -93,18 +95,20 @@ class RefreshView(APIView):
                 secure=True,
                 httponly=True,
                 samesite='Lax',
-                max_age=60*60*24*1
+                max_age=settings.ACCESS_TOKEN_LIFETIME
 
             )
             return response
         except (TokenError, InvalidToken):
             response = Response({"error":"Invalid refresh token"}, status=status.HTTP_400_BAD_REQUEST)
+            response.delete_cookie("access_token")
+            response.delete_cookie("refresh_token")
             return response
         
 class UserCheckView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
         if request.user and request.user.is_authenticated:
-            return Response({"username":request.user.username,"is_creator":request.user.is_creator, "authenticated":True})
+            return Response({"username":request.user.username,"is_creator":request.user.is_creator, "authenticated":True}, status=status.HTTP_200_OK)
         else:
-            return Response({"username":"", "is_creator":False, "authenticated":False})
+            return Response({"username":"", "is_creator":False, "authenticated":False}, status=status.HTTP_200_OK)
