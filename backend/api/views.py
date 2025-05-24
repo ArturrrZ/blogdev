@@ -7,7 +7,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
-from .serializers import CustomUserSerializer
+from .serializers import CustomUserSerializer, CreatorSerializer
 from django.conf import settings
 
 # Create your views here.
@@ -18,6 +18,27 @@ def home(request):
 
 
  
+class CreatorView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        #receive info to view or edit
+        user = request.user
+        if not user.is_creator:
+            return Response({"error":"You are not a creator!"}, status=status.HTTP_403_FORBIDDEN)
+        serializer = CreatorSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    def put(self, request):
+        #edit creator
+        #TODO write a test for this 👇
+        if not request.user.is_creator:
+            return Response({"error":"You are not a creator!"}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = CreatorSerializer(data=request.data, instance=request.user, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)    
+
+
 
 # Authentication below
 class RegisterView(APIView):

@@ -106,4 +106,22 @@ class APITestCase(TestCase):
         self.assertEqual(authenticated_response.status_code, status.HTTP_200_OK)     
         self.assertEqual(authenticated_response.data['is_creator'], True)     
         self.assertEqual(authenticated_response.data['authenticated'], True)     
-        self.assertEqual(authenticated_response.data['username'], "creator")    
+        self.assertEqual(authenticated_response.data['username'], "creator") 
+    def test_creator_get(self):
+        self.client.cookies = self.creator_cookies
+        response = self.client.get("/api/creator/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("about", response.data)
+        print(response.data)
+    def test_creator_edit(self):
+        self.client.cookies = self.creator_cookies
+        response = self.client.put("/api/creator/", {
+            "about": "My New desription!",
+            "first_name":"New First Name"
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        get_response = self.client.get("/api/creator/")
+        self.assertEqual("My New desription!", get_response.data["about"])
+        self.assertEqual("New First Name", get_response.data["first_name"])
+        print(get_response.data)    
+    #       
