@@ -29,7 +29,6 @@ class CreatorView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     def put(self, request):
         #edit creator
-        #TODO write a test for this 👇
         if not request.user.is_creator:
             return Response({"error":"You are not a creator!"}, status=status.HTTP_403_FORBIDDEN)
         

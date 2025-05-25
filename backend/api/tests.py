@@ -12,14 +12,27 @@ class APITestCase(TestCase):
             "email":"testemail@gmail.com",
             "password":"testpassword"
         }
+        #get creator cookies for next tests👇
         CustomUser.objects.create_user(username="creator", password="creator", email="creator@gmail.com", is_creator=True)
-        login_response = self.client.post("/api/accounts/login_logout/", {
+        creator_login_response = self.client.post("/api/accounts/login_logout/", {
             "username": "creator",
             "password":"creator"
         })
         
-        self.creator_cookies = login_response.cookies #access token will be still available
+        self.creator_cookies = creator_login_response.cookies #access token will be still available
         self.client.delete("/api/accounts/login_logout/") #refresh token will be in token_blacklist
+        #get user(not a creator) cookies for next tests 👇
+        CustomUser.objects.create_user(username="user", password="user", email="user@gmail.com", is_creator=False)
+        user_login_response = self.client.post("/api/accounts/login_logout/",{
+            "username": "user",
+            "password":"user"
+        })
+        
+        self.user_cookies = user_login_response.cookies
+        self.client.delete("/api/accounts/login_logout/") #refresh token will be in token_blacklist
+
+        
+
     ##
     def test_user_is_creator(self):
         creator = CustomUser.objects.get(username="creator")
@@ -112,7 +125,7 @@ class APITestCase(TestCase):
         response = self.client.get("/api/creator/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("about", response.data)
-        print(response.data)
+        # print(response.data)
     def test_creator_edit(self):
         self.client.cookies = self.creator_cookies
         response = self.client.put("/api/creator/", {
@@ -123,5 +136,13 @@ class APITestCase(TestCase):
         get_response = self.client.get("/api/creator/")
         self.assertEqual("My New desription!", get_response.data["about"])
         self.assertEqual("New First Name", get_response.data["first_name"])
-        print(get_response.data)    
+        # print(get_response.data)    
+    def test_creator_error(self):
+        self.client.cookies = self.user_cookies #log in as user
+        not_creator_response = self.client.get("/api/creator/")
+        self.assertEqual(not_creator_response.status_code, status.HTTP_403_FORBIDDEN)
+        not_creator_response = self.client.put("/api/creator/", {
+            "about":"New About me!"
+        })
+        self.assertEqual(not_creator_response.status_code, status.HTTP_403_FORBIDDEN)
     #       
