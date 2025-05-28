@@ -34,4 +34,28 @@ class Post(models.Model):
     reports = models.ManyToManyField(CustomUser, related_name='reported_posts',blank=True, null=True)
     def __str__(self):
         return f"{self.title} by {self.author.username}"   
+
+class Subscription(models.Model):   
+    creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='subscribers')
+    subscriber = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='subscriptions')
+    subscribed = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    stripe_subscription_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['creator', 'subscriber'], name='unique_subscription')
+        ]
+    def clean(self):
+        # Ensure a user cannot subscribe to themselves
+        if self.creator == self.subscriber:
+            raise ValidationError("A user cannot subscribe to themselves.")
+  
+    def save(self, *args, **kwargs):
+        # Call clean method before saving
+        self.clean()
+        super().save(*args, **kwargs) 
+    def __str__(self):
+        return f"{self.creator} + 1: ({self.subscriber})"   
+
+
 #
