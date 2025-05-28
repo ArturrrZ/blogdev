@@ -13,4 +13,5 @@ urlpatterns = [
     #path('creator/become/', views.CreatorBecomeView.as_view()), #BECOME A CREATOR TODO with stripe
     path('creator/posts/', views.PostCreateView.as_view()), #create post
     path('creator/posts/<int:pk>/', views.PostDetailView.as_view()), #retrieve, update, delete post
+    path('posts/like_report/<int:id>/', views.PostReportLikeView.as_view()),
 ]

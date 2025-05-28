@@ -9,7 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from .serializers import CustomUserSerializer, CreatorSerializer, PostSerializer
 from django.conf import settings
-from .models import Post
+from .models import Post, CustomUser, Subscription
 from rest_framework.exceptions import PermissionDenied
 from .permissions import IsCreator
 # Create your views here.
@@ -19,7 +19,36 @@ def home(request):
     return Response("home")
 
 
- 
+class PostReportLikeView(APIView):
+    def get_post(self, id):
+        post = get_object_or_404(Post, id=id)
+        try:
+            subscription = Subscription.objects.get(creator=post.author, subscriber=self.request.user)
+        except Subscription.DoesNotExist:
+            raise PermissionDenied("You are not subscribed!")
+        
+        if not subscription.is_active:
+            raise PermissionDenied("Your subscription is not active!")
+        return post
+    def post(self, request, id):
+        #report the post
+        post = self.get_post(id=id)
+        if post.author == request.user:
+            return Response({"message": "You cannot report your own post"}, status=status.HTTP_400_BAD_REQUEST)
+        if post.reports.filter(id=request.user.id).exists():
+            return Response({"message": "You already reported this post"}, status=status.HTTP_400_BAD_REQUEST)
+        post.reports.add(request.user)
+        return Response({"message":"You reported the post"}, status=status.HTTP_201_CREATED)
+    def put(self, request, id):
+        #like/unlike the post
+        post = self.get_post(id=id)
+        if post.likes.filter(id=request.user.id).exists():
+            post.likes.remove(request.user)
+            return Response({"message":"You unliked the post"}, status=status.HTTP_200_OK)
+        else:
+            post.likes.add(request.user)
+            return Response({"message":"You liked the post"}, status=status.HTTP_200_OK)
+
 class CreatorDetailView(APIView):
     permission_classes = [IsAuthenticated, IsCreator]
     def get(self, request):
