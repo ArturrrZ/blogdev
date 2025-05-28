@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
@@ -7,9 +7,11 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
-from .serializers import CustomUserSerializer, CreatorSerializer
+from .serializers import CustomUserSerializer, CreatorSerializer, PostSerializer
 from django.conf import settings
-
+from .models import Post
+from rest_framework.exceptions import PermissionDenied
+from .permissions import IsCreator
 # Create your views here.
 
 @api_view(['GET'])
@@ -18,28 +20,49 @@ def home(request):
 
 
  
-class CreatorView(APIView):
-    permission_classes = [IsAuthenticated]
+class CreatorDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsCreator]
     def get(self, request):
         #receive info to view or edit
-        user = request.user
-        if not user.is_creator:
-            return Response({"error":"You are not a creator!"}, status=status.HTTP_403_FORBIDDEN)
-        serializer = CreatorSerializer(user)
+        serializer = CreatorSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
     def put(self, request):
-        #edit creator
-        if not request.user.is_creator:
-            return Response({"error":"You are not a creator!"}, status=status.HTTP_403_FORBIDDEN)
-        
-        serializer = CreatorSerializer(data=request.data, instance=request.user, partial=True)
+        #update creator
+        serializer = CreatorSerializer(instance=request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)    
+class PostCreateView(APIView):
+    permission_classes = [IsAuthenticated, IsCreator]
+    def post(self, request):
+        serializer = PostSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(author=request.user)
+        return Response({"message":"You successfully created a post!"}, status=status.HTTP_201_CREATED)
+class PostDetailView(APIView):
+    permission_classes = [IsAuthenticated, IsCreator]
+    def get_post(self, pk):
+        post = get_object_or_404(Post, id=pk)
+        if self.request.user != post.author:
+            raise PermissionDenied("This is not your post!")
+        return post
+    def get(self, request, pk):
+        post = self.get_post(pk=pk)
+        serializer = PostSerializer(post, context={"request":request}) 
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    def put(self, request, pk):
+        post = self.get_post(pk=pk)
+        serializer = PostSerializer(instance=post, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True) 
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK) 
+    def delete(self, request, pk):
+        post = self.get_post(pk=pk)
+        post_title = post.title    
+        post.delete()
+        return Response({"message":f"Post '{post_title}' is deleted"}, status=status.HTTP_200_OK)
 
-
-
-# Authentication below
+# Authentication below #
 class RegisterView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):

@@ -20,3 +20,18 @@ class CustomUser(AbstractUser):
     
     def __str__(self):
         return self.username
+    
+class Post(models.Model):
+    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='posts')
+    title = models.CharField(max_length=50)
+    body = models.TextField()
+    image = models.ImageField(upload_to='images/', blank=True, null=True)
+    # video = models.FileField(upload_to='videos/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_paid = models.BooleanField(default=False)
+    likes = models.ManyToManyField(CustomUser, related_name='liked_posts', blank=True, null=True)
+    reports = models.ManyToManyField(CustomUser, related_name='reported_posts',blank=True, null=True)
+    def __str__(self):
+        return f"{self.title} by {self.author.username}"   
+#

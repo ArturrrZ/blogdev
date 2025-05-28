@@ -5,9 +5,12 @@ urlpatterns = [
     path('', views.home),
     #authentication 👇
     path('accounts/register/', views.RegisterView.as_view()),
-    path('accounts/login_logout/', views.LoginLogoutView.as_view()), #GET TOKENS, GET RID OF THEM
+    path('accounts/login_logout/', views.LoginLogoutView.as_view()), #get tokens, delete tokens
     path('accounts/refresh_token/', views.RefreshView.as_view()),
-    path('accounts/me/', views.UserCheckView.as_view()), #GIVE INFO TO THE FRONTEND ABOUT USER
+    path('accounts/me/', views.UserCheckView.as_view()), #give info to the frontend about the user
     #creator 👇
-    path('creator/', views.CreatorView.as_view()), #GET INFO, BECOME A CREATOR, EDIT CREATOR
+    path('creator/', views.CreatorDetailView.as_view()), #retrieve and update a creator
+    #path('creator/become/', views.CreatorBecomeView.as_view()), #BECOME A CREATOR TODO with stripe
+    path('creator/posts/', views.PostCreateView.as_view()), #create post
+    path('creator/posts/<int:pk>/', views.PostDetailView.as_view()), #retrieve, update, delete post
 ]
