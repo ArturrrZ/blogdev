@@ -22,6 +22,8 @@ def home(request):
 class PostReportLikeView(APIView):
     def get_post(self, id):
         post = get_object_or_404(Post, id=id)
+        if post.author == self.request.user:
+            return post
         try:
             subscription = Subscription.objects.get(creator=post.author, subscriber=self.request.user)
         except Subscription.DoesNotExist:
@@ -34,9 +36,9 @@ class PostReportLikeView(APIView):
         #report the post
         post = self.get_post(id=id)
         if post.author == request.user:
-            return Response({"message": "You cannot report your own post"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "You cannot report your own post"}, status=status.HTTP_400_BAD_REQUEST)
         if post.reports.filter(id=request.user.id).exists():
-            return Response({"message": "You already reported this post"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "You already reported this post"}, status=status.HTTP_400_BAD_REQUEST)
         post.reports.add(request.user)
         return Response({"message":"You reported the post"}, status=status.HTTP_201_CREATED)
     def put(self, request, id):

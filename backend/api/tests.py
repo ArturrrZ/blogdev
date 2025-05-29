@@ -1,7 +1,7 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
-from .models import CustomUser
+from .models import CustomUser, Post, Subscription
 # Create your tests here.
 
 class APITestCase(TestCase):
@@ -40,13 +40,28 @@ class APITestCase(TestCase):
         self.user_cookies = user_login_response.cookies
         self.client.delete("/api/accounts/login_logout/") #refresh token will be in token_blacklist
 
-        
-
-    ##
+    def create_testpost(self, creator=None, title=None, body=None):
+        if creator is None:
+            creator="creator"
+        if title is None:
+            title="test post"
+        if body is None:
+            body="test body"        
+        creator = CustomUser.objects.get(username=creator)
+        return Post.objects.create(author=creator, title=title, body=body)    
+    def subscribe(self, creator=None, subscriber=None):
+        if creator is None:
+            creator="creator"
+        if subscriber is None:
+            subscriber="user"
+        creator_obj = CustomUser.objects.get(username=creator)        
+        subscriber_obj = CustomUser.objects.get(username=subscriber)        
+        return Subscription.objects.create(creator=creator_obj, subscriber=subscriber_obj)
+    
     def test_user_is_creator(self):
         creator = CustomUser.objects.get(username="creator")
         self.assertEqual(creator.is_creator, True)      
-    ##  
+      
     def test_registration_successful(self):
         response = self.client.post('/api/accounts/register/', {
             "username":"testuser",
@@ -69,7 +84,7 @@ class APITestCase(TestCase):
         # print(response.data)
         self.assertIn('error', response.data) 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-    #
+    
     def test_login_successful(self):
         self.client.post('/api/accounts/register/', self.testuser_data)
         response = self.client.post('/api/accounts/login_logout/', 
@@ -115,7 +130,7 @@ class APITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", response.data)
         self.assertEqual(response.data['error'], 'Invalid refresh token')
-    #
+    
     def test_me_view(self):
         not_authenticated_response = self.client.get("/api/accounts/me/")
         self.assertEqual(not_authenticated_response.status_code, status.HTTP_200_OK)     
@@ -154,7 +169,7 @@ class APITestCase(TestCase):
             "about":"New About me!"
         })
         self.assertEqual(not_creator_response.status_code, status.HTTP_403_FORBIDDEN)
-    #
+    
     def test_creator_post_CRUD(self):
         self.client.cookies = self.creator_cookies
         #create
@@ -218,5 +233,74 @@ class APITestCase(TestCase):
         self.client.cookies = self.creator_cookies
         response = self.client.get("/api/creator/posts/31/")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)    
+    
+    def test_post_report(self):
+        testpost = self.create_testpost(creator="creator")
+        reports = testpost.reports.count() #should be 0
+        subscription = self.subscribe(creator="creator", subscriber="user")
+        self.client.cookies = self.user_cookies
+
+        response = self.client.post(f"/api/posts/report_like/{testpost.id}/")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['message'], 'You reported the post')
+        reported = testpost.reports.count()
+        self.assertEqual(reported, reports + 1)
+
+        duplicate_response = self.client.post(f"/api/posts/report_like/{testpost.id}/")
+        unduplicated_reports = testpost.reports.count()
+        self.assertEqual(duplicate_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(duplicate_response.data['error'], 'You already reported this post')
+        self.assertEqual(reported, unduplicated_reports)    
+    def test_post_report_not_sub(self):
+        post = self.create_testpost()
+        self.client.cookies = self.user_cookies
+
+        response = self.client.post(f"/api/posts/report_like/{post.id}/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['detail'], 'You are not subscribed!')
+    def test_post_report_own_post(self):
+        self.client.cookies = self.creator_cookies
+        post = self.create_testpost()
         
+        response = self.client.post(f"/api/posts/report_like/{post.id}/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'You cannot report your own post')
+    
+    def test_post_like(self):
+        testpost = self.create_testpost()
+        likes = testpost.likes.count()
+        self.subscribe()
+        self.client.cookies = self.user_cookies
+
+        response = self.client.put(f"/api/posts/report_like/{testpost.id}/")
+        liked = testpost.likes.count()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'You liked the post')
+        self.assertEqual(liked, likes + 1)
+
+
+        unlike_response = self.client.put(f"/api/posts/report_like/{testpost.id}/")
+        unliked = testpost.likes.count()
+        self.assertEqual(unlike_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(unlike_response.data['message'], 'You unliked the post')
+        self.assertEqual(unliked, liked - 1)
+    def test_post_like_not_sub(self):
+        testpost = self.create_testpost()
+        likes = testpost.likes.count()
+        self.client.cookies = self.user_cookies
+
+        response = self.client.put(f"/api/posts/report_like/{testpost.id}/")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN) 
+        self.assertEqual(testpost.likes.count(), likes)
+    def test_post_like_own_post(self):
+        testpost = self.create_testpost()
+        self.client.cookies = self.creator_cookies
+
+        response = self.client.put(f"/api/posts/report_like/{testpost.id}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'You liked the post')
+
+        unlike_response = self.client.put(f"/api/posts/report_like/{testpost.id}/")
+        self.assertEqual(unlike_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(unlike_response.data['message'], 'You unliked the post')
     #        
