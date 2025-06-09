@@ -74,7 +74,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         # else:
         #     posts = obj.posts.filter(is_paid=False).order_by('-created')
         # return PostSerializer(posts, many=True, context={"request":self.context.get('request')}).data
-        posts = obj.posts.order_by('-created')
+        posts = obj.posts.order_by('-created_at')
         serialized_posts = PostSerializer(posts, many=True, context={"request":self.context.get('request')}).data
         if not is_subscribed and not self.context.get('my_page'):
             for post in serialized_posts:
