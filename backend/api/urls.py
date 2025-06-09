@@ -15,4 +15,5 @@ urlpatterns = [
     path('creator/posts/<int:pk>/', views.PostDetailView.as_view()), #retrieve, update, delete post
 
     path('posts/report_like/<int:id>/', views.PostReportLikeView.as_view()), #report(post), like/unlike (put) posts
+    path('profile/<str:username>/', views.ProfileView.as_view()),
 ]

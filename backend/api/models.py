@@ -57,5 +57,5 @@ class Subscription(models.Model):
     def __str__(self):
         return f"{self.creator} + 1: ({self.subscriber})"   
 
-
+#class Subscription Plan(models.Model)
 #

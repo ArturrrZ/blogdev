@@ -7,7 +7,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
-from .serializers import CustomUserSerializer, CreatorSerializer, PostSerializer
+from .serializers import CustomUserSerializer, CreatorSerializer, PostSerializer, ProfileSerializer
 from django.conf import settings
 from .models import Post, CustomUser, Subscription
 from rest_framework.exceptions import PermissionDenied
@@ -18,6 +18,14 @@ from .permissions import IsCreator
 def home(request):
     return Response("home")
 
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, username):
+        profile = get_object_or_404(CustomUser, username=username)
+        is_subscribed = Subscription.objects.filter(creator=profile, subscriber=request.user).exists()
+        serializer = ProfileSerializer(profile, context={'is_subscribed': is_subscribed, 'my_page': profile.id == request.user.id, "request":request,}) 
+        return Response({"profile":serializer.data, "my_page": profile.id == request.user.id, "is_subscribed": is_subscribed})
 
 class PostReportLikeView(APIView):
     def get_post(self, id):
@@ -75,7 +83,7 @@ class PostDetailView(APIView):
     def get_post(self, pk):
         post = get_object_or_404(Post, id=pk)
         if self.request.user != post.author:
-            raise PermissionDenied("This is not your post!")
+            raise PermissionDenied("This is not your post!") #403
         return post
     def get(self, request, pk):
         post = self.get_post(pk=pk)
