@@ -18,7 +18,7 @@ from .permissions import IsCreator
 def home(request):
     return Response("home")
 
-class SubscriptionsView(APIView):
+class MySubscriptionsView(APIView):
     def get(self, request):
         subscriptions = request.user.subscriptions.all()
         serializer = SubscriptionSerializer(subscriptions, many=True)

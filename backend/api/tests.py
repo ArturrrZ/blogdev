@@ -378,4 +378,18 @@ class APITestCase(TestCase):
         self.assertEqual(locked_post['title'], "Locked Content")
         self.assertEqual(locked_post['image'], "hidden image")
         self.assertIsNone(locked_post['body'])
+    
+    def test_my_subscriptions(self):
+        self.client.cookies = self.user_cookies
+        self.subscribe()
+        
+        response = self.client.get('/api/my_subscriptions/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        subscription = response.data[0]
+        self.assertEqual(subscription['creator']['username'], 'creator')
+        self.assertEqual(subscription['is_active'], True)
+    def test_my_subscriptions_not_auth(self):
+        response = self.client.get("/api/my_subscriptions/")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
     #        
