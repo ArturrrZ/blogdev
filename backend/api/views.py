@@ -7,7 +7,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
-from .serializers import CustomUserSerializer, CreatorSerializer, PostSerializer, ProfileSerializer
+from .serializers import CustomUserSerializer, CreatorSerializer, PostSerializer, ProfileSerializer, SubscriptionSerializer
 from django.conf import settings
 from .models import Post, CustomUser, Subscription
 from rest_framework.exceptions import PermissionDenied
@@ -18,6 +18,11 @@ from .permissions import IsCreator
 def home(request):
     return Response("home")
 
+class SubscriptionsView(APIView):
+    def get(self, request):
+        subscriptions = request.user.subscriptions.all()
+        serializer = SubscriptionSerializer(subscriptions, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]

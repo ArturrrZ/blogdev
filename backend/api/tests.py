@@ -303,4 +303,79 @@ class APITestCase(TestCase):
         unlike_response = self.client.put(f"/api/posts/report_like/{testpost.id}/")
         self.assertEqual(unlike_response.status_code, status.HTTP_200_OK)
         self.assertEqual(unlike_response.data['message'], 'You unliked the post')
+    
+    def test_profile_creator_sub(self):
+        self.client.cookies = self.user_cookies
+        self.subscribe()
+        self.create_testpost()
+
+        response = self.client.get("/api/profile/creator/")
+        # print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['profile']['username'], 'creator')
+        self.assertTrue(response.data['profile']['is_creator'])
+        self.assertEqual(response.data['profile']['posts_total'], 1)
+        self.assertEqual(response.data['profile']['subscribers'], 1)
+        self.assertTrue(response.data['is_subscribed']) 
+        self.assertFalse(response.data['my_page'])
+    def test_profile_creator_not_sub(self):
+        self.client.cookies = self.user_cookies
+
+        self.create_testpost()
+
+        response = self.client.get("/api/profile/creator/")
+        # print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['profile']['username'], 'creator')
+        self.assertTrue(response.data['profile']['is_creator'])
+        self.assertEqual(response.data['profile']['posts_total'], 1)
+        self.assertEqual(response.data['profile']['subscribers'], 0)
+        self.assertFalse(response.data['is_subscribed']) 
+        self.assertFalse(response.data['my_page'])    
+    def test_profile_creator_own(self):
+        self.client.cookies = self.creator_cookies
+
+        response = self.client.get("/api/profile/creator/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['profile']['username'], 'creator')
+        self.assertTrue(response.data['profile']['is_creator'])
+        self.assertFalse(response.data['is_subscribed']) 
+        self.assertTrue(response.data['my_page'])    
+    def test_profile_user(self):
+        self.client.cookies = self.creator_cookies
+        
+        response = self.client.get('/api/profile/user/')
+        # print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['profile']['is_creator'], False)
+        self.assertEqual(response.data['profile']['username'], 'user')
+        self.assertEqual(response.data['my_page'], False)
+        self.assertEqual(response.data['is_subscribed'], False)
+    def test_profile_user_own(self):
+        self.client.cookies = self.user_cookies
+        
+        response = self.client.get('/api/profile/user/')
+        # print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['profile']['is_creator'], False)
+        self.assertEqual(response.data['profile']['username'], 'user')
+        self.assertEqual(response.data['my_page'], True)
+        self.assertEqual(response.data['is_subscribed'], False)    
+    def test_profile_not_auth(self):
+        response = self.client.get("/api/profile/creator/")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    def test_locked_post_content_hidden_for_not_subscriber(self):
+        self.client.cookies = self.user_cookies
+        post = self.create_testpost()
+        post.is_paid = True
+        post.image = 'asd'
+        post.save()
+
+        response = self.client.get("/api/profile/creator/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['profile']['posts_paid'], 1)
+        locked_post = response.data['profile']['posts'][0]
+        self.assertEqual(locked_post['title'], "Locked Content")
+        self.assertEqual(locked_post['image'], "hidden image")
+        self.assertIsNone(locked_post['body'])
     #        

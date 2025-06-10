@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Post
+from .models import CustomUser, Post, Subscription
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -69,11 +69,6 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def get_posts(self, obj):
         is_subscribed = self.context.get('is_subscribed')
-        # if is_subscribed or self.context.get('my_page'):
-        #     posts = obj.posts.order_by('-created')
-        # else:
-        #     posts = obj.posts.filter(is_paid=False).order_by('-created')
-        # return PostSerializer(posts, many=True, context={"request":self.context.get('request')}).data
         posts = obj.posts.order_by('-created_at')
         serialized_posts = PostSerializer(posts, many=True, context={"request":self.context.get('request')}).data
         if not is_subscribed and not self.context.get('my_page'):
@@ -97,4 +92,10 @@ class ProfileSerializer(serializers.ModelSerializer):
             return obj.subscription_plan.price / 100  
         return 0 
 
+class SubscriptionSerializer(serializers.ModelSerializer):
+    creator = CreatorSerializer()
+    class Meta:
+        model = Subscription
+        fields = ['creator', 'subscribed', 'is_active']
+  
 #    

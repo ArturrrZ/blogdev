@@ -16,4 +16,6 @@ urlpatterns = [
 
     path('posts/report_like/<int:id>/', views.PostReportLikeView.as_view()), #report(post), like/unlike (put) posts
     path('profile/<str:username>/', views.ProfileView.as_view()),
+    path('subscriptions/', views.SubscriptionsView.as_view())
+
 ]
