@@ -21,5 +21,6 @@ urlpatterns = [
     path('subscribe/', views.CheckoutSessionView.as_view()),
     path('success/', views.SuccessView.as_view()),
     path('cancel/', views.CancelView.as_view()),
+    path('cancel_subscription/', views.SubscriptionCancelView.as_view()),
 
 ]

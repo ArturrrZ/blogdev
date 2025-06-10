@@ -191,6 +191,21 @@ class CheckoutSessionView(APIView):
             print(e)
             return Response({"message":"Server error"}, status.HTTP_500_INTERNAL_SERVER_ERROR)  
 
+class SubscriptionCancelView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        creator_username = request.data.get("creator_username")
+        creator = get_object_or_404(CustomUser, username=creator_username)
+        user = request.user
+        subscription = Subscription.objects.filter(creator=creator, subscriber=user).first()
+        if not subscription:
+            return Response({"error":"No such subscription"}, status=status.HTTP_400_BAD_REQUEST)
+        stripe.Subscription.cancel(subscription.stripe_subscription_id)    
+        # subscription.is_active = False
+        # subscription.save()
+        return Response({"response":"Subscription was cancelled!"})    
+       
 
 
 class SuccessView(TemplateView):
