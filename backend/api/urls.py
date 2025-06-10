@@ -10,12 +10,16 @@ urlpatterns = [
     path('accounts/me/', views.UserCheckView.as_view()), #give info to the frontend about the user
     #creator 👇
     path('creator/', views.CreatorDetailView.as_view()), #retrieve and update a creator
-    path('creator/become/', views.CreatorBecomeView.as_view()), #BECOME A CREATOR TODO with stripe
+    path('creator/become/', views.CreatorBecomeStripeView.as_view()), #BECOME A CREATOR with stripe
     path('creator/posts/', views.PostCreateView.as_view()), #create post
     path('creator/posts/<int:pk>/', views.PostDetailView.as_view()), #retrieve, update, delete post
 
     path('posts/report_like/<int:id>/', views.PostReportLikeView.as_view()), #report(post), like/unlike (put) posts
     path('profile/<str:username>/', views.ProfileView.as_view()),
-    path('my_subscriptions/', views.MySubscriptionsView.as_view())
+    path('my_subscriptions/', views.MySubscriptionsView.as_view()),
+
+    path('subscribe/', views.CheckoutSessionView.as_view()),
+    path('success/', views.SuccessView.as_view()),
+    path('cancel/', views.CancelView.as_view()),
 
 ]

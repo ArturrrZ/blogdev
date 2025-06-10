@@ -57,5 +57,17 @@ class Subscription(models.Model):
     def __str__(self):
         return f"{self.creator} + 1: ({self.subscriber})"   
 
-#class Subscription Plan(models.Model)
+class SubscriptionPlan(models.Model):
+    creator = models.OneToOneField(
+        CustomUser,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name='subscription_plan'
+    )
+    price = models.IntegerField(blank=False, null=False, default=100, help_text='In cents') #in cents
+    stripe_price_id = models.CharField(max_length=100, unique=True)
+    greeting_message = models.CharField(blank=False, null=False)
+    def __str__(self):
+        return self.creator.username
+
 #

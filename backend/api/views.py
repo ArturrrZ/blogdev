@@ -9,10 +9,15 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from .serializers import CustomUserSerializer, CreatorSerializer, PostSerializer, ProfileSerializer, SubscriptionSerializer
 from django.conf import settings
-from .models import Post, CustomUser, Subscription
+from .models import Post, CustomUser, Subscription, SubscriptionPlan
 from rest_framework.exceptions import PermissionDenied
 from .permissions import IsCreator
+import stripe
+import os
+from django.views.generic import TemplateView
 # Create your views here.
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
 
 @api_view(['GET'])
 def home(request):
@@ -105,6 +110,95 @@ class PostDetailView(APIView):
         post_title = post.title    
         post.delete()
         return Response({"message":f"Post '{post_title}' is deleted"}, status=status.HTTP_200_OK)
+
+#STRIPE below
+class CreatorBecomeStripeView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        if SubscriptionPlan.objects.filter(creator=request.user).exists():
+            return Response({"error":"You already a creator!"}, status=status.HTTP_400_BAD_REQUEST)
+        price = request.data.get('price')
+        greeting_message = request.data.get('greeting_message')
+        print(price)
+        print(greeting_message)
+        if not price or not greeting_message:
+            return Response({"error":"Both Price and Greeting message fielad are required!"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            price = int(price)
+        except ValueError:
+            return Response({"error": "Price must be a number"}, status=status.HTTP_400_BAD_REQUEST)
+        name = f'Subscription Plan for {request.user.username}'
+        try:
+            stripe_price = stripe.Price.create(
+                unit_amount=int(price * 100),
+                currency="usd",
+                recurring={"interval": "month"},
+                product_data={"name": name}
+            )
+            # create in the db
+            subscription = SubscriptionPlan.objects.create(
+                creator=request.user,
+                price=price*100,
+                stripe_price_id=stripe_price.id,
+                greeting_message = greeting_message
+            )
+            user = request.user
+            user.is_creator = True
+            user.save()
+            return Response({
+                'message': 'Subscription plan created successfully',
+                'subscription_id': subscription.stripe_price_id,
+                'stripe_price_id': stripe_price.id
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            print(e)
+            return Response({"error":"Server Error"}, status=500)  
+
+class CheckoutSessionView(APIView):
+    permission_classes = [IsAuthenticated]  
+
+    def post(self, request):
+        username = request.data.get("username")
+        creator = get_object_or_404(CustomUser, username=username)
+        user = request.user
+        YOUR_DOMAIN = os.environ.get("YOUR_DOMAIN")
+        stripe_price_id = None
+        if Subscription.objects.filter(creator=creator, subscriber=user).exists():
+            return Response({"error":"You already subscribed"}, status=status.HTTP_400_BAD_REQUEST)
+        if hasattr(creator, 'subscription_plan') and creator.subscription_plan:
+            stripe_price_id = creator.subscription_plan.stripe_price_id
+        else:
+            return Response({"error":"No subscription plan for this user"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                line_items=[
+                    {
+                        'price': stripe_price_id,
+                        'quantity': 1,
+                    },
+                ],
+                metadata={
+                "creator": creator.username,
+                "subscriber": user.username 
+                },
+                mode='subscription',
+                success_url=YOUR_DOMAIN +
+                f'success/',
+                cancel_url=YOUR_DOMAIN + 'cancel/',
+            )
+            return Response({"checkout_url": checkout_session.url}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(e)
+            return Response({"message":"Server error"}, status.HTTP_500_INTERNAL_SERVER_ERROR)  
+
+
+
+class SuccessView(TemplateView):
+    template_name = 'success.html'
+class CancelView(TemplateView):
+    template_name = 'cancel.html'
+
+
 
 # Authentication below #
 class RegisterView(APIView):
@@ -199,3 +293,4 @@ class UserCheckView(APIView):
             return Response({"username":request.user.username,"is_creator":request.user.is_creator, "authenticated":True}, status=status.HTTP_200_OK)
         else:
             return Response({"username":"", "is_creator":False, "authenticated":False}, status=status.HTTP_200_OK)
+#            
