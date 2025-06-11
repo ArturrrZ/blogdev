@@ -66,8 +66,25 @@ class SubscriptionPlan(models.Model):
     )
     price = models.IntegerField(blank=False, null=False, default=100, help_text='In cents') #in cents
     stripe_price_id = models.CharField(max_length=100, unique=True)
-    greeting_message = models.CharField(blank=False, null=False)
+    greeting_message = models.TextField(blank=False, null=False)
     def __str__(self):
         return self.creator.username
 
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('like','Like'),
+        ('subscription','Subscription'),
+        ('comment','Comment'),
+        ('other','Other'),
+    ]
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='notifications')
+    fromuser = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name='sent_notifications', blank=True, null=True)
+    category = models.CharField(max_length=30, choices=NOTIFICATION_TYPES)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+    related_post = models.ForeignKey(Post, on_delete=models.SET_NULL, blank=True, null=True)
+
+    def __str__(self):
+        return f"To {self.user.username}: {self.message[:30]}"
 #
