@@ -1,5 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework.response import Response
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -190,12 +192,16 @@ class CheckoutSessionView(APIView):
         except Exception as e:
             print(e)
             return Response({"message":"Server error"}, status.HTTP_500_INTERNAL_SERVER_ERROR)  
+class SuccessView(TemplateView):
+    template_name = 'success.html'
+class CancelView(TemplateView):
+    template_name = 'cancel.html'
 
 class SubscriptionCancelView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        creator_username = request.data.get("creator_username")
+        creator_username = request.data.get("username", "")
         creator = get_object_or_404(CustomUser, username=creator_username)
         user = request.user
         subscription = Subscription.objects.filter(creator=creator, subscriber=user).first()
@@ -206,13 +212,52 @@ class SubscriptionCancelView(APIView):
         # subscription.save()
         return Response({"response":"Subscription was cancelled!"})    
        
-
-
-class SuccessView(TemplateView):
-    template_name = 'success.html'
-class CancelView(TemplateView):
-    template_name = 'cancel.html'
-
+@csrf_exempt
+def stripe_webhook(request):
+    print("WEBHOOK -----------------------------------------------------")
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    event = None
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        # Invalid payload
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        return HttpResponse(status=400)
+    event_type = event['type']
+    session = event['data']['object']
+    metadata = session["metadata"]
+    if event_type == 'checkout.session.completed':
+        session = event['data']['object']
+        # Access the metadata from the session
+        creator_username = session['metadata']['creator']
+        subscriber_username = session['metadata']['subscriber']
+        # Retrieve Subscription ID from the session
+        subscription_id = session.get('subscription') 
+        print(subscription_id)
+        # Process the metadata and other session information
+        print(f"Creator: {creator_username}, Subscriber: {subscriber_username}")
+        creator = get_object_or_404(CustomUser, username=creator_username)
+        subscriber = get_object_or_404(CustomUser, username=subscriber_username)
+        new_subscription = Subscription(creator=creator, subscriber=subscriber, stripe_subscription_id=subscription_id)
+        new_subscription.save()
+        print("Subscription was created!")
+        return HttpResponse(status=201)
+    elif event_type == 'customer.subscription.trial_will_end':
+        # send email probably
+        print('Subscription trial will end')
+    elif event_type == 'customer.subscription.deleted':
+        subscription_id = event['data']['object']['id']
+        # Subscription.objects.filter(stripe_subscription_id=subscription_id).update(is_active=False)
+        sub = get_object_or_404(Subscription, stripe_subscription_id=subscription_id)
+        sub.delete()
+        print("Subscription was deleted!")
+        # return HttpResponse(status=200)
+    return HttpResponse(status=200)
 
 
 # Authentication below #

@@ -17,10 +17,10 @@ urlpatterns = [
     path('posts/report_like/<int:id>/', views.PostReportLikeView.as_view()), #report(post), like/unlike (put) posts
     path('profile/<str:username>/', views.ProfileView.as_view()),
     path('my_subscriptions/', views.MySubscriptionsView.as_view()),
-
+    #stripe block below
     path('subscribe/', views.CheckoutSessionView.as_view()),
-    path('success/', views.SuccessView.as_view()),
-    path('cancel/', views.CancelView.as_view()),
-    path('cancel_subscription/', views.SubscriptionCancelView.as_view()),
-
+    path('success/', views.SuccessView.as_view()), #html after successful payment
+    path('cancel/', views.CancelView.as_view()), #html if error
+    path('cancel_subscription/', views.SubscriptionCancelView.as_view()), 
+    path('webhooks/stripe/', views.stripe_webhook)
 ]
