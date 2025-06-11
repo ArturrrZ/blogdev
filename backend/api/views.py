@@ -17,6 +17,8 @@ from .permissions import IsCreator
 import stripe
 import os
 from django.views.generic import TemplateView
+from django.core.mail import send_mail
+
 # Create your views here.
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -230,6 +232,7 @@ def stripe_webhook(request):
         return HttpResponse(status=400)
     event_type = event['type']
     session = event['data']['object']
+    
     metadata = session["metadata"]
     if event_type == 'checkout.session.completed':
         session = event['data']['object']
@@ -238,7 +241,10 @@ def stripe_webhook(request):
         subscriber_username = session['metadata']['subscriber']
         # Retrieve Subscription ID from the session
         subscription_id = session.get('subscription') 
-        print(subscription_id)
+        customer_details = session.get('customer_details')
+        # print(customer_details)
+        # print(customer_details['email'])
+        # print(subscription_id)
         # Process the metadata and other session information
         print(f"Creator: {creator_username}, Subscriber: {subscriber_username}")
         creator = get_object_or_404(CustomUser, username=creator_username)
@@ -246,6 +252,16 @@ def stripe_webhook(request):
         new_subscription = Subscription(creator=creator, subscriber=subscriber, stripe_subscription_id=subscription_id)
         new_subscription.save()
         print("Subscription was created!")
+        #TODO send email
+        subscriber_email=customer_details['email']
+        send_mail(
+            subject='Greeting Message',
+            message= creator.subscription_plan.greeting_message,
+            from_email=os.environ.get("EMAIL_HOST_USER"),
+            recipient_list=[subscriber_email]
+        )
+        #TODO send a notification to the creator
+        #maybe send for analytics
         return HttpResponse(status=201)
     elif event_type == 'customer.subscription.trial_will_end':
         # send email probably
@@ -256,6 +272,8 @@ def stripe_webhook(request):
         sub = get_object_or_404(Subscription, stripe_subscription_id=subscription_id)
         sub.delete()
         print("Subscription was deleted!")
+        #TODO send email
+        #maybe send for analytics
         # return HttpResponse(status=200)
     return HttpResponse(status=200)
 
