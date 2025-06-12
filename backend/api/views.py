@@ -11,7 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from .serializers import CustomUserSerializer, CreatorSerializer, PostSerializer, ProfileSerializer, SubscriptionSerializer
 from django.conf import settings
-from .models import Post, CustomUser, Subscription, SubscriptionPlan
+from .models import Post, CustomUser, Subscription, SubscriptionPlan, Notification
 from rest_framework.exceptions import PermissionDenied
 from .permissions import IsCreator
 import stripe
@@ -68,9 +68,22 @@ class PostReportLikeView(APIView):
         post = self.get_post(id=id)
         if post.likes.filter(id=request.user.id).exists():
             post.likes.remove(request.user)
+            Notification.objects.filter(
+                user=post.author,
+                fromuser=request.user,
+                category='like',
+                related_post=post
+                ).delete()
             return Response({"message":"You unliked the post"}, status=status.HTTP_200_OK)
         else:
             post.likes.add(request.user)
+            Notification.objects.create(
+            user=post.author,
+            fromuser=request.user,
+            category='like',
+            message= f'{request.user.username} liked the post: "{post.title[:10]}"',
+            related_post=post
+            )
             return Response({"message":"You liked the post"}, status=status.HTTP_200_OK)
 
 class CreatorDetailView(APIView):
@@ -252,15 +265,23 @@ def stripe_webhook(request):
         new_subscription = Subscription(creator=creator, subscriber=subscriber, stripe_subscription_id=subscription_id)
         new_subscription.save()
         print("Subscription was created!")
-        #TODO send email
         subscriber_email=customer_details['email']
-        send_mail(
-            subject='Greeting Message',
-            message= creator.subscription_plan.greeting_message,
-            from_email=os.environ.get("EMAIL_HOST_USER"),
-            recipient_list=[subscriber_email]
-        )
+        try:
+            send_mail(
+                subject='Greeting Message',
+                message=creator.subscription_plan.greeting_message,
+                from_email=os.environ.get("EMAIL_HOST_USER"),
+                recipient_list=[subscriber_email]
+            )
+        except Exception as e:
+            print(f"Failed to send greeting email: {e}")
         #TODO send a notification to the creator
+        Notification.objects.create(
+            user=creator,
+            fromuser=subscriber,
+            category='subscription',
+            message=f'Hooray! {subscriber.username} subscribed on you!'
+        )
         #maybe send for analytics
         return HttpResponse(status=201)
     elif event_type == 'customer.subscription.trial_will_end':

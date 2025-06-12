@@ -86,5 +86,5 @@ class Notification(models.Model):
     related_post = models.ForeignKey(Post, on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
-        return f"To {self.user.username}: {self.message[:30]}"
+        return f"To {self.user.username}: {self.message[:50]}"
 #
