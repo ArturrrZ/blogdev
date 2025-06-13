@@ -9,7 +9,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
-from .serializers import CustomUserSerializer, CreatorSerializer, PostSerializer, ProfileSerializer, SubscriptionSerializer
+from .serializers import CustomUserSerializer, CreatorSerializer, PostSerializer, ProfileSerializer, SubscriptionSerializer, NotificationSerializer
 from django.conf import settings
 from .models import Post, CustomUser, Subscription, SubscriptionPlan, Notification
 from rest_framework.exceptions import PermissionDenied
@@ -18,7 +18,6 @@ import stripe
 import os
 from django.views.generic import TemplateView
 from django.core.mail import send_mail
-
 # Create your views here.
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
@@ -26,6 +25,36 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 @api_view(['GET'])
 def home(request):
     return Response("home")
+
+class NotificationsListUpdateView(APIView):
+    def get(self, request):
+        read_all = request.query_params.get('read_all', 'false').lower() in ['true', 't', '1']
+        only_count = request.query_params.get('only_count', 'false').lower() in ['true', 't', ] #HTTP polling
+        notifications = Notification.objects.filter(user=request.user).order_by('-timestamp')
+        if not read_all:
+            #default behavior
+            notifications = notifications.filter(is_read=False)
+        if only_count:
+            return  Response({"count": notifications.count()}, status=status.HTTP_200_OK)       
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response({"count": len(serializer.data), "notifications":serializer.data}, status=status.HTTP_200_OK)
+    def post(self, request):
+        #read all
+        updated_count = Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        return Response({"message":f"{updated_count} notifications marked as read"}, status=status.HTTP_200_OK)
+
+class NotificationRetrieveUpdateView(APIView):
+    def get(self, request, id):
+        notification = get_object_or_404(Notification, id=id, user=request.user)
+        serializer = NotificationSerializer(notification)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    def patch(self, request, id):
+        notification = get_object_or_404(Notification, id=id, user=request.user)
+        if notification.is_read:
+            return Response({"error":"You already marked this notification as read"}, status=status.HTTP_400_BAD_REQUEST)
+        notification.is_read = True
+        notification.save()
+        return Response({"message":f"You marked this notification as read, id: {id}"})
 
 class MySubscriptionsView(APIView):
     def get(self, request):

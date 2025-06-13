@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import CustomUser, Post, Subscription
+from .models import CustomUser, Post, Subscription, Notification
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -97,5 +97,10 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = ['creator', 'subscribed', 'is_active']
-  
+
+class NotificationSerializer(serializers.ModelSerializer):
+    fromuser = CreatorSerializer()
+    class Meta:
+        model = Notification
+        fields = '__all__'
 #    

@@ -22,5 +22,8 @@ urlpatterns = [
     path('success/', views.SuccessView.as_view()), #html after successful payment
     path('cancel/', views.CancelView.as_view()), #html if error
     path('cancel_subscription/', views.SubscriptionCancelView.as_view()), 
-    path('webhooks/stripe/', views.stripe_webhook)
+    path('webhooks/stripe/', views.stripe_webhook),
+
+    path('notifications/all/', views.NotificationsListUpdateView.as_view()), #read_all(default=False), only_count(default=False) - for HTTP polling
+    path('notifications/<int:id>/', views.NotificationRetrieveUpdateView.as_view()), #get, patch
 ]
