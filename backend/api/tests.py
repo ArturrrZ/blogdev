@@ -433,6 +433,32 @@ class APITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("subscription_id", response.data)
         self.assertTrue(SubscriptionPlan.objects.filter(creator=get_object_or_404(CustomUser, username='creator')).exists())
-        print(response.data)
 
+    def test_checkout_session_unsuccessful(self):
+        subscription = self.subscribe()
+        self.client.cookies = self.user_cookies
+
+        response = self.client.post('/api/subscribe/', {'username':'creator'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'You already subscribed')
+
+        subscription.delete()
+        response = self.client.post('/api/subscribe/', {'username':'creator'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'No subscription plan for this user')
+    
+    @patch("api.views.stripe.checkout.Session.create")
+    def test_checkout_session(self, mock_stripe_checkout):
+        self.client.cookies = self.user_cookies
+        mock_stripe_checkout.return_value = type("obj", (object,), {"url": "checkout_url.com"})
+
+        sub_plan = SubscriptionPlan.objects.create(
+            creator = get_object_or_404(CustomUser, username='creator'),
+            price = 1000,#in cents
+            stripe_price_id = 'unique-product-id',
+            greeting_message = 'Hello, my new sub!',
+        )
+        response = self.client.post('/api/subscribe/', {'username':'creator'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['checkout_url'], 'checkout_url.com')
     #       
