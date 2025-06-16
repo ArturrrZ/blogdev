@@ -165,10 +165,10 @@ class CreatorBecomeStripeView(APIView):
             return Response({"error":"You already a creator!"}, status=status.HTTP_400_BAD_REQUEST)
         price = request.data.get('price')
         greeting_message = request.data.get('greeting_message')
-        print(price)
-        print(greeting_message)
+        # print(price)
+        # print(greeting_message)
         if not price or not greeting_message:
-            return Response({"error":"Both Price and Greeting message fielad are required!"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error":"Both Price and Greeting message fields are required!"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             price = int(price)
         except ValueError:
@@ -322,7 +322,12 @@ def stripe_webhook(request):
         sub = get_object_or_404(Subscription, stripe_subscription_id=subscription_id)
         sub.delete()
         print("Subscription was deleted!")
-        #TODO send email
+        #TODO BYE BYE EMAIL
+        subscriber_email = "???"
+        # send_mail(subject='Goodbye Message',
+        #         message="We are sad to hear that you are leaving!",
+        #         from_email=os.environ.get("EMAIL_HOST_USER"),
+        #         recipient_list=[subscriber_email])
         #maybe send for analytics
         # return HttpResponse(status=200)
     return HttpResponse(status=200)

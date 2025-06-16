@@ -1,7 +1,9 @@
+from unittest.mock import patch
 from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
-from .models import CustomUser, Post, Subscription
+from .models import CustomUser, Post, Subscription, SubscriptionPlan
+from django.shortcuts import get_object_or_404
 # Create your tests here.
 
 class APITestCase(TestCase):
@@ -392,4 +394,45 @@ class APITestCase(TestCase):
     def test_my_subscriptions_not_auth(self):
         response = self.client.get("/api/my_subscriptions/")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    #        
+    #stripe
+    def test_creator_become_unsuccessful(self):
+        creator = get_object_or_404(CustomUser, username='creator')
+        sub_plan = SubscriptionPlan.objects.create(
+            creator = creator,
+            price = 1000,#in cents
+            stripe_price_id = 'unique-product-id',
+            greeting_message = 'Hello, my new sub!',
+        )
+        self.client.cookies = self.creator_cookies
+
+        response = self.client.post('/api/creator/become/', {'price': 10, 'greeting_message': 'Hello my new sub!'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'You already a creator!')
+
+        sub_plan.delete()
+
+        response = self.client.post('/api/creator/become/', {
+            'price': 10,
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'Both Price and Greeting message fields are required!')
+
+        response = self.client.post('/api/creator/become/', {
+            'price': '10$',
+            'greeting_message': 'Hello my new sub!'
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'Price must be a number')
+    
+    @patch("api.views.stripe.Price.create")  # заменить на путь до импорта stripe
+    def test_successful_creation(self, mock_stripe_create):
+        self.client.cookies = self.creator_cookies
+        mock_stripe_create.return_value = type("obj", (object,), {"id": "fake_stripe_id"})
+        data = {"price": 10, "greeting_message": "Thanks for subscribing!"}
+        response = self.client.post("/api/creator/become/", data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("subscription_id", response.data)
+        self.assertTrue(SubscriptionPlan.objects.filter(creator=get_object_or_404(CustomUser, username='creator')).exists())
+        print(response.data)
+
+    #       
