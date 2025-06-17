@@ -254,7 +254,7 @@ class SubscriptionCancelView(APIView):
         stripe.Subscription.cancel(subscription.stripe_subscription_id)    
         # subscription.is_active = False
         # subscription.save()
-        return Response({"response":"Subscription was cancelled!"})    
+        return Response({"message":"Subscription was cancelled!"})    
        
 @csrf_exempt
 def stripe_webhook(request):

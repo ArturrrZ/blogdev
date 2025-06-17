@@ -4,6 +4,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from .models import CustomUser, Post, Subscription, SubscriptionPlan
 from django.shortcuts import get_object_or_404
+import json
 # Create your tests here.
 
 class APITestCase(TestCase):
@@ -51,14 +52,16 @@ class APITestCase(TestCase):
             body="test body"        
         creator = CustomUser.objects.get(username=creator)
         return Post.objects.create(author=creator, title=title, body=body)    
-    def subscribe(self, creator=None, subscriber=None):
+    def subscribe(self, creator=None, subscriber=None, stripe_subscription_id=None):
         if creator is None:
             creator="creator"
         if subscriber is None:
             subscriber="user"
+        if stripe_subscription_id is None:
+            stripe_subscription_id = 'sub_fake_1'    
         creator_obj = CustomUser.objects.get(username=creator)        
         subscriber_obj = CustomUser.objects.get(username=subscriber)        
-        return Subscription.objects.create(creator=creator_obj, subscriber=subscriber_obj)
+        return Subscription.objects.create(creator=creator_obj, subscriber=subscriber_obj, stripe_subscription_id=stripe_subscription_id)
     
     def test_user_is_creator(self):
         creator = CustomUser.objects.get(username="creator")
@@ -461,4 +464,47 @@ class APITestCase(TestCase):
         response = self.client.post('/api/subscribe/', {'username':'creator'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['checkout_url'], 'checkout_url.com')
+    
+    def test_subscription_cancel_unsuccessful(self):
+        self.client.cookies = self.user_cookies
+        response = self.client.post('/api/cancel_subscription/', {'username':'creator'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'No such subscription')
+
+    @patch("api.views.stripe.Subscription.cancel") 
+    def test_subscription_cancel(self, mock_stripe_cancel):
+        self.subscribe() #sub_fake_1
+        self.client.cookies = self.user_cookies
+        response = self.client.post('/api/cancel_subscription/', {'username':'creator'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'Subscription was cancelled!')
+        mock_stripe_cancel.assert_called_once_with("sub_fake_1")
+    @patch("api.views.stripe.Webhook.construct_event")
+    def test_stripe_webhook_subscription_deleted(self, mock_construct_event):
+        sub = self.subscribe() #sub_fake_1
+        event_payload = {
+            "type": "customer.subscription.deleted",
+            "data": {
+                "object": {
+                    "id": "sub_fake_1",
+                    "metadata": {"creator":"creator", "subscriber":"user"}
+                }
+            }
+        }
+
+        mock_construct_event.return_value = event_payload
+        #make sure that sub exists before deleting
+        self.assertTrue(Subscription.objects.filter(stripe_subscription_id="sub_fake_1").exists()) 
+
+        response = self.client.post(
+            "/api/webhooks/stripe/",
+            data=json.dumps(event_payload),
+            content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="fake"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Subscription.objects.filter(stripe_subscription_id="sub_fake_1").exists())
+
+
     #       
