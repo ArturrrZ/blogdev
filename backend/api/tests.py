@@ -2,9 +2,10 @@ from unittest.mock import patch
 from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
-from .models import CustomUser, Post, Subscription, SubscriptionPlan
+from .models import CustomUser, Post, Subscription, SubscriptionPlan, Notification
 from django.shortcuts import get_object_or_404
 import json
+import os
 # Create your tests here.
 
 class APITestCase(TestCase):
@@ -479,6 +480,7 @@ class APITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['message'], 'Subscription was cancelled!')
         mock_stripe_cancel.assert_called_once_with("sub_fake_1")
+    
     @patch("api.views.stripe.Webhook.construct_event")
     def test_stripe_webhook_subscription_deleted(self, mock_construct_event):
         sub = self.subscribe() #sub_fake_1
@@ -506,5 +508,41 @@ class APITestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Subscription.objects.filter(stripe_subscription_id="sub_fake_1").exists())
 
+    @patch("api.views.stripe.Webhook.construct_event")    
+    @patch("api.views.send_mail")
+    def test_stripe_webhook_checkout_session_completed(self,mock_send_mail, mock_construct_event):
+        creator=get_object_or_404(CustomUser, username='creator')
+        subscriber=get_object_or_404(CustomUser, username='user')
+        SubscriptionPlan.objects.create(
+            creator=creator, 
+            price=1000, stripe_price_id='stripe_price_id', 
+            greeting_message='Hello my new sub!')
+        event_payload = {
+            "type": "checkout.session.completed",
+            "data": {
+                "object": {
+                    "subscription": "sub_fake_1",
+                    "metadata": {"creator":"creator", "subscriber":"user"},
+                    'customer_details': {'email':'customeremail'}
+                }
+            }
+        }
 
+        mock_construct_event.return_value = event_payload
+        response = self.client.post(
+            "/api/webhooks/stripe/",
+            data=json.dumps(event_payload),
+            content_type="application/json",
+            HTTP_STRIPE_SIGNATURE="fake"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        mock_send_mail.assert_called_once_with(
+            subject='Greeting Message',
+            message='Hello my new sub!',
+            from_email=os.environ.get("EMAIL_HOST_USER"),
+            recipient_list=['customeremail']
+)
+        self.assertTrue(Subscription.objects.filter(creator=creator, subscriber=subscriber, stripe_subscription_id='sub_fake_1').exists())
+        self.assertTrue(Notification.objects.filter(user=creator,fromuser=subscriber, category='subscription').exists())
     #       

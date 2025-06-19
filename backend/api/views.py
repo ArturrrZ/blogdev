@@ -302,6 +302,7 @@ def stripe_webhook(request):
                 from_email=os.environ.get("EMAIL_HOST_USER"),
                 recipient_list=[subscriber_email]
             )
+            print("Email has been sent")
         except Exception as e:
             print(f"Failed to send greeting email: {e}")
         #TODO send a notification to the creator
