@@ -29,7 +29,7 @@ def home(request):
 class NotificationsListUpdateView(APIView):
     def get(self, request):
         read_all = request.query_params.get('read_all', 'false').lower() in ['true', 't', '1']
-        only_count = request.query_params.get('only_count', 'false').lower() in ['true', 't', ] #HTTP polling
+        only_count = request.query_params.get('only_count', 'true').lower() in ['true', 't', ] #HTTP polling
         notifications = Notification.objects.filter(user=request.user).order_by('-timestamp')
         if not read_all:
             #default behavior
@@ -54,7 +54,7 @@ class NotificationRetrieveUpdateView(APIView):
             return Response({"error":"You already marked this notification as read"}, status=status.HTTP_400_BAD_REQUEST)
         notification.is_read = True
         notification.save()
-        return Response({"message":f"You marked this notification as read, id: {id}"})
+        return Response({"message":f"You marked this notification as read, id: {id}"}, status=status.HTTP_200_OK)
 
 class MySubscriptionsView(APIView):
     def get(self, request):

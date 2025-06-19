@@ -545,4 +545,98 @@ class APITestCase(TestCase):
 )
         self.assertTrue(Subscription.objects.filter(creator=creator, subscriber=subscriber, stripe_subscription_id='sub_fake_1').exists())
         self.assertTrue(Notification.objects.filter(user=creator,fromuser=subscriber, category='subscription').exists())
+    
+    def test_notifications_all(self):
+        creator = get_object_or_404(CustomUser, username='creator')
+        user = get_object_or_404(CustomUser, username='user')
+        notification = Notification.objects.create(user=creator, category='other', message='some message from admin')
+        self.client.cookies = self.creator_cookies
+        #first check
+        response = self.client.get("/api/notifications/all/")
+        # print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+
+        self.client.cookies = self.user_cookies
+        post = self.create_testpost()
+        self.subscribe()
+        print(post.id)
+        self.client.put(f'/api/posts/report_like/{post.id}/')
+        
+        #second check
+        self.client.cookies=self.creator_cookies
+        response = self.client.get("/api/notifications/all/?only_count=false")
+        # print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 2)
+        self.assertEqual(response.data['notifications'][0]['category'], 'like')
+        self.assertEqual(response.data['notifications'][0]['fromuser']['username'], 'user')
+        self.assertEqual(response.data['notifications'][1]['category'], 'other')
+        self.client.cookies = self.user_cookies
+        self.client.put(f'/api/posts/report_like/{post.id}/')
+        
+        #third check
+        self.client.cookies=self.creator_cookies
+        response = self.client.get("/api/notifications/all/")
+        # print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+
+        self.client.cookies = self.user_cookies
+        self.client.post("/api/notifications/all/") #read all another user
+        #4th check
+        self.client.cookies=self.creator_cookies
+        response = self.client.get("/api/notifications/all/")
+        # print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+
+        self.client.post("/api/notifications/all/") #read all
+        #5th check
+        self.client.cookies=self.creator_cookies
+        response = self.client.get("/api/notifications/all/")
+        # print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 0)
+
+        #6th check
+        self.client.cookies=self.creator_cookies
+        response = self.client.get("/api/notifications/all/?read_all=t")
+        # print(response.data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['count'], 1)
+    def test_notification_details(self):
+        creator = get_object_or_404(CustomUser, username='creator')
+        user = get_object_or_404(CustomUser, username='user')
+        notification = Notification.objects.create(user=creator, category='other', message='some message from admin')
+        self.client.cookies = self.creator_cookies
+        #first check
+        response = self.client.get(f"/api/notifications/{notification.id}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        notifications = Notification.objects.filter(user=creator)
+        self.assertEqual(notifications.filter(is_read=False).count(), 1)
+
+        response = self.client.patch(f"/api/notifications/{notification.id}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'You marked this notification as read, id: 1')
+        self.assertEqual(notifications.filter(is_read=False).count(), 0)
+
+        response = self.client.patch(f"/api/notifications/{notification.id}/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'You already marked this notification as read')
+    def test_notification_details_wrong_user(self):
+        creator = get_object_or_404(CustomUser, username='creator')
+        user = get_object_or_404(CustomUser, username='user')
+        notification = Notification.objects.create(user=creator, category='other', message='some message from admin')
+        self.client.cookies = self.user_cookies
+        #first check
+        response = self.client.get(f"/api/notifications/{notification.id}/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+        response = self.client.patch(f"/api/notifications/{notification.id}/")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(Notification.objects.filter(is_read=False, user=creator).count(), 1)
+
+
     #       

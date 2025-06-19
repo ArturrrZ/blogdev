@@ -99,7 +99,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         fields = ['creator', 'subscribed', 'is_active']
 
 class NotificationSerializer(serializers.ModelSerializer):
-    fromuser = CreatorSerializer()
+    fromuser = CustomUserSerializer()
     class Meta:
         model = Notification
         fields = '__all__'
