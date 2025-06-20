@@ -291,10 +291,10 @@ def stripe_webhook(request):
         print(f"Creator: {creator_username}, Subscriber: {subscriber_username}")
         creator = get_object_or_404(CustomUser, username=creator_username)
         subscriber = get_object_or_404(CustomUser, username=subscriber_username)
-        new_subscription = Subscription(creator=creator, subscriber=subscriber, stripe_subscription_id=subscription_id)
+        subscriber_email=customer_details['email']
+        new_subscription = Subscription(creator=creator, subscriber=subscriber, stripe_subscription_id=subscription_id, subscriber_stripe_email=subscriber_email)
         new_subscription.save()
         print("Subscription was created!")
-        subscriber_email=customer_details['email']
         try:
             send_mail(
                 subject='Greeting Message',
@@ -321,16 +321,17 @@ def stripe_webhook(request):
         subscription_id = event['data']['object']['id']
         # Subscription.objects.filter(stripe_subscription_id=subscription_id).update(is_active=False)
         sub = get_object_or_404(Subscription, stripe_subscription_id=subscription_id)
+        print(sub.subscriber_stripe_email)
         sub.delete()
         print("Subscription was deleted!")
         #TODO BYE BYE EMAIL
-        subscriber_email = "???"
-        # send_mail(subject='Goodbye Message',
-        #         message="We are sad to hear that you are leaving!",
-        #         from_email=os.environ.get("EMAIL_HOST_USER"),
-        #         recipient_list=[subscriber_email])
+        subscriber_email = sub.subscriber_stripe_email
+        send_mail(subject='Goodbye Message',
+                message="We are sad to hear that you are leaving!",
+                from_email=os.environ.get("EMAIL_HOST_USER"),
+                recipient_list=[subscriber_email])
         #maybe send for analytics
-        # return HttpResponse(status=200)
+        return HttpResponse(status=200)
     return HttpResponse(status=200)
 
 

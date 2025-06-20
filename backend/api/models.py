@@ -38,6 +38,7 @@ class Post(models.Model):
 class Subscription(models.Model):   
     creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='subscribers')
     subscriber = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='subscriptions')
+    subscriber_stripe_email = models.EmailField(blank=True, null=True, help_text='Email linked to stripe') #linked to stripe to send emails after a webhooks
     subscribed = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     stripe_subscription_id = models.CharField(max_length=100, unique=True, null=True, blank=True)

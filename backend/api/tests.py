@@ -482,7 +482,8 @@ class APITestCase(TestCase):
         mock_stripe_cancel.assert_called_once_with("sub_fake_1")
     
     @patch("api.views.stripe.Webhook.construct_event")
-    def test_stripe_webhook_subscription_deleted(self, mock_construct_event):
+    @patch("api.views.send_mail")
+    def test_stripe_webhook_subscription_deleted(self, mock_send_mail ,mock_construct_event):
         sub = self.subscribe() #sub_fake_1
         event_payload = {
             "type": "customer.subscription.deleted",
@@ -505,6 +506,7 @@ class APITestCase(TestCase):
             HTTP_STRIPE_SIGNATURE="fake"
         )
 
+        mock_send_mail.assert_called_once()
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Subscription.objects.filter(stripe_subscription_id="sub_fake_1").exists())
 
