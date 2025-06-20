@@ -20,7 +20,7 @@ from django.views.generic import TemplateView
 from django.core.mail import send_mail
 # Create your views here.
 stripe.api_key = settings.STRIPE_SECRET_KEY
-
+from .send_goodbye_email import send_goodbye_email
 
 @api_view(['GET'])
 def home(request):
@@ -321,15 +321,16 @@ def stripe_webhook(request):
         subscription_id = event['data']['object']['id']
         # Subscription.objects.filter(stripe_subscription_id=subscription_id).update(is_active=False)
         sub = get_object_or_404(Subscription, stripe_subscription_id=subscription_id)
-        print(sub.subscriber_stripe_email)
+        subscriber_email = sub.subscriber_stripe_email
         sub.delete()
         print("Subscription was deleted!")
-        #TODO BYE BYE EMAIL
         subscriber_email = sub.subscriber_stripe_email
-        send_mail(subject='Goodbye Message',
-                message="We are sad to hear that you are leaving!",
-                from_email=os.environ.get("EMAIL_HOST_USER"),
-                recipient_list=[subscriber_email])
+        # send_mail(subject='Goodbye Message',
+        #         message="We are sad to hear that you are leaving! You will not be charged for this subscription anymore. \n\n\n\n Best wishes,\nPersonal Blog Support team",
+        #         from_email=os.environ.get("EMAIL_HOST_USER"),
+        #         recipient_list=[subscriber_email])
+        send_goodbye_email(fromemail=os.environ.get("EMAIL_HOST_USER"), toemail=[subscriber_email])
+
         #maybe send for analytics
         return HttpResponse(status=200)
     return HttpResponse(status=200)

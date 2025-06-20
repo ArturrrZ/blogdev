@@ -482,7 +482,7 @@ class APITestCase(TestCase):
         mock_stripe_cancel.assert_called_once_with("sub_fake_1")
     
     @patch("api.views.stripe.Webhook.construct_event")
-    @patch("api.views.send_mail")
+    @patch("api.views.send_goodbye_email")
     def test_stripe_webhook_subscription_deleted(self, mock_send_mail ,mock_construct_event):
         sub = self.subscribe() #sub_fake_1
         event_payload = {
