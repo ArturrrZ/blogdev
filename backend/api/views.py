@@ -21,7 +21,8 @@ from django.core.mail import send_mail
 # Create your views here.
 stripe.api_key = settings.STRIPE_SECRET_KEY
 from .send_goodbye_email import send_goodbye_email
-
+from django.utils import timezone
+from datetime import datetime
 @api_view(['GET'])
 def home(request):
     return Response("home")
@@ -67,6 +68,8 @@ class ProfileView(APIView):
     def get(self, request, username):
         profile = get_object_or_404(CustomUser, username=username)
         is_subscribed = Subscription.objects.filter(creator=profile, subscriber=request.user).exists()
+        if is_subscribed and request.user.id != profile.id:
+            Subscription.objects.filter(creator=profile, subscriber=request.user).update(last_visited=timezone.now())
         serializer = ProfileSerializer(profile, context={'is_subscribed': is_subscribed, 'my_page': profile.id == request.user.id, "request":request,}) 
         return Response({"profile":serializer.data, "my_page": profile.id == request.user.id, "is_subscribed": is_subscribed})
 

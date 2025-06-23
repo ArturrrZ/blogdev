@@ -42,6 +42,7 @@ class Subscription(models.Model):
     subscribed = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     stripe_subscription_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    last_visited = models.DateTimeField(null=True, blank=True)
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['creator', 'subscriber'], name='unique_subscription')

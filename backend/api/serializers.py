@@ -94,10 +94,17 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class SubscriptionSerializer(serializers.ModelSerializer):
     creator = CreatorSerializer()
+    new_posts = serializers.SerializerMethodField()
     class Meta:
         model = Subscription
-        fields = ['creator', 'subscribed', 'is_active']
+        fields = ['creator', 'subscribed', 'is_active','new_posts']
+    def get_new_posts(self, obj):
+        last_visited = obj.last_visited
+        if last_visited:
 
+            return Post.objects.filter(author=obj.creator, created_at__gt=last_visited).count()
+        else: 
+            return 0
 class NotificationSerializer(serializers.ModelSerializer):
     fromuser = CustomUserSerializer()
     class Meta:
