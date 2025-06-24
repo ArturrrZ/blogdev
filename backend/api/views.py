@@ -287,10 +287,6 @@ def stripe_webhook(request):
         # Retrieve Subscription ID from the session
         subscription_id = session.get('subscription') 
         customer_details = session.get('customer_details')
-        # print(customer_details)
-        # print(customer_details['email'])
-        # print(subscription_id)
-        # Process the metadata and other session information
         print(f"Creator: {creator_username}, Subscriber: {subscriber_username}")
         creator = get_object_or_404(CustomUser, username=creator_username)
         subscriber = get_object_or_404(CustomUser, username=subscriber_username)
@@ -325,6 +321,7 @@ def stripe_webhook(request):
         # Subscription.objects.filter(stripe_subscription_id=subscription_id).update(is_active=False)
         sub = get_object_or_404(Subscription, stripe_subscription_id=subscription_id)
         subscriber_email = sub.subscriber_stripe_email
+        creator_username = sub.creator.username
         sub.delete()
         print("Subscription was deleted!")
         subscriber_email = sub.subscriber_stripe_email
@@ -332,7 +329,7 @@ def stripe_webhook(request):
         #         message="We are sad to hear that you are leaving! You will not be charged for this subscription anymore. \n\n\n\n Best wishes,\nPersonal Blog Support team",
         #         from_email=os.environ.get("EMAIL_HOST_USER"),
         #         recipient_list=[subscriber_email])
-        send_goodbye_email(fromemail=os.environ.get("EMAIL_HOST_USER"), toemail=[subscriber_email])
+        send_goodbye_email(fromemail=os.environ.get("EMAIL_HOST_USER"), toemail=[subscriber_email], creator_username=creator_username)
 
         #maybe send for analytics
         return HttpResponse(status=200)

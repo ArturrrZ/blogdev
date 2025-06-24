@@ -2,7 +2,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
 
-def send_goodbye_email(fromemail, toemail):
+def send_goodbye_email(fromemail, toemail, creator_username):
     
     # First, render the plain text content.
     text_content = render_to_string(
@@ -17,7 +17,7 @@ def send_goodbye_email(fromemail, toemail):
     )
     # Then, create a multipart email instance.
     msg = EmailMultiAlternatives(
-        "GoodBye email",
+        f"{creator_username}'s subscription cancellation",
         text_content,
         fromemail,
         toemail,

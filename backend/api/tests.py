@@ -395,6 +395,21 @@ class APITestCase(TestCase):
         subscription = response.data[0]
         self.assertEqual(subscription['creator']['username'], 'creator')
         self.assertEqual(subscription['is_active'], True)
+        self.assertIn('new_posts', subscription)
+        # +1 new post
+        self.assertEqual(subscription['new_posts'], 0)
+        self.client.get("/api/profile/creator/")
+        self.create_testpost()
+        response = self.client.get('/api/my_subscriptions/')
+        subscription = response.data[0]
+        self.assertEqual(subscription['new_posts'], 1)
+        #mark as read
+        self.client.get("/api/profile/creator/")
+        response = self.client.get('/api/my_subscriptions/')
+        subscription = response.data[0]
+        self.assertEqual(subscription['new_posts'], 0)
+
+
     def test_my_subscriptions_not_auth(self):
         response = self.client.get("/api/my_subscriptions/")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
