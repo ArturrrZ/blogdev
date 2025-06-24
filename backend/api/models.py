@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.core.exceptions import ValidationError
 
-
+#before docker
 class CustomUser(AbstractUser):
     # custom fields
     email = models.EmailField(unique=True, blank=False, null=False)
