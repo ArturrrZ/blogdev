@@ -1,0 +1,37 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual env
+venv/
+env/
+
+# Git
+.git
+.gitignore
+
+# Editor config
+.vscode/
+.idea/
+
+# Docker ignore itself
+.dockerignore
+Dockerfile
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env and local settings
+.env
+
+# Logs
+*.log
+
+# Migrations cache
+*/migrations/__pycache__/
+
+# Media/static if generated locally
+media/
+staticfiles/
