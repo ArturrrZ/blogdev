@@ -426,7 +426,8 @@ class UserCheckView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
         if request.user and request.user.is_authenticated:
-            return Response({"username":request.user.username,"is_creator":request.user.is_creator, "authenticated":True}, status=status.HTTP_200_OK)
+            print()
+            return Response({"username":request.user.username,"is_creator":request.user.is_creator, "is_authenticated":True}, status=status.HTTP_200_OK)
         else:
             return Response({"username":"", "is_creator":False, "authenticated":False}, status=status.HTTP_200_OK)
 #            

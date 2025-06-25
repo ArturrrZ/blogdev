@@ -12,3 +12,16 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     env_file:
       - .env
+  frontend:
+    build:
+      context: ./frontend 
+    volumes:
+      - ./frontend:/react
+      - /react/node_modules
+    ports:
+      - "3000:3000"
+    image: blog_frontend
+    container_name: blog_frontend
+    command: npm run dev -- --host
+    env_file:
+      - .env
