@@ -3,12 +3,6 @@ import { Avatar, Typography, Card, CardContent, Box } from '@mui/material';
 import api from '../api'
 import {useNavigate} from 'react-router-dom';
 
-// const profiles = [
-//   { id: 1, name: 'John Doe', image: 'https://via.placeholder.com/150', description: 'Software Engineer' },
-//   { id: 2, name: 'Jane Smith', image: 'https://via.placeholder.com/150', description: 'UI/UX Designer' },
-//   { id: 3, name: 'Alice Johnson', image: 'https://via.placeholder.com/150', description: 'Product Manager' },
-// ];
-
 function ProfileList() {
   const navigate = useNavigate();
   const baseURL = 'http://localhost:8000/';
@@ -34,9 +28,9 @@ function ProfileList() {
         padding: 3,
       }}
     >
-      {subscriptions.map((sub) => (
-        <Card
-          key={sub.id}
+      {subscriptions.map((sub, index) => {
+        return (<Card
+          key={index}
           sx={{
             display: 'flex',
             flexDirection: 'column',
@@ -80,9 +74,10 @@ function ProfileList() {
             cursor: 'pointer',} }}>
               {sub.creator.first_name} {sub.creator.last_name}
             </Typography>
+            {Number(sub.new_posts) > 0 && <Typography sx={{ color: 'green', fontWeight: 'bold' }}>+{sub.new_posts} new post{sub.new_posts > 1?"s":""}</Typography>}
           </CardContent>
-        </Card>
-      ))}
+        </Card>)
+      })}
     </Box></div>
   );
 }
