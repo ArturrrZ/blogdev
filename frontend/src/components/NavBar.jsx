@@ -130,7 +130,7 @@ export default function NavBar() {
                 aria-label="notifications of current user"
                 aria-controls="menu-appbar"
                 aria-haspopup="true"
-                onClick={()=>{navigate("/404")}}
+                onClick={()=>{navigate("/notifications/")}}
                 color="inherit"
               >
                 <CircleNotificationsIcon />

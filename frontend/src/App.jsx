@@ -19,13 +19,13 @@ import SubscriptionPlan from './pages/SubscriptionPlan'
 import { Navigate } from 'react-router-dom'
 import CreatorRoute from './pages/CreatorRoute'
 import { AuthContext } from './AuthContext'
-
+import NotificationsPage from './pages/NotificationsPage'
 function App() {
   const [authenticated, setAuthenticated] = useState(false)
   const [user, setUser] = useState("")
   const [creator, setCreator] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [notifications, setNotifications] = useState(154);
+  const [notifications, setNotifications] = useState(0);
 
   useEffect(() => {
     async function initializeAuth() {
@@ -43,7 +43,30 @@ function App() {
 
     initializeAuth();
   }, []);
+  useEffect(()=>{
+    let notificationsInterval;
+    async function fetchNotifications(){
+    try {
+      const response = await api.get("/api/notifications/all/");
+      if (response.data.count > notifications) {
+       setNotifications(response.data.count);
+      }
+     } 
+    catch (err) {
+    console.error("Ошибка получения уведомлений:", err);
+    }
+  }
 
+
+    if (authenticated){
+      fetchNotifications()
+      notificationsInterval = setInterval(fetchNotifications, 60000);
+    }
+    return ()=>{
+      if (notificationsInterval){
+      clearInterval(notificationsInterval)}
+    }
+  }, [authenticated])
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -61,6 +84,7 @@ function App() {
         <Route path='/creator/edit/' element={<CreatorRoute><EditCreator/></CreatorRoute>}/>
         <Route path='/post/create' element={<CreatorRoute><CreatePost /></CreatorRoute>}/>
         <Route path='/post/edit/:id/' element={<CreatorRoute><EditPost/></CreatorRoute>}/>
+        <Route path='/notifications/' element={<ProtectedRoute><NotificationsPage/></ProtectedRoute>}/>
         <Route path='/404' element={<NotFound/>}/>
         <Route path='*' element={<NotFound/>}/>
       </Routes>

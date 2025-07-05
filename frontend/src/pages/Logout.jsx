@@ -1,4 +1,4 @@
-import React, {useContext} from 'react'
+import React, {useContext, useEffect} from 'react'
 import Button from '@mui/material/Button';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
@@ -18,7 +18,7 @@ function Logout() {
             setTimeout(()=>{
               setAuthenticated(false)
               setCreator(false)
-              navigate("/login")}, 3000)
+              }, 1500)
         })
         .catch(err=>{
             alert(err)
