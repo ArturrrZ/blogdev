@@ -21,6 +21,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Menu from '@mui/material/Menu';
 import { Divider } from '@mui/material';
 import { AuthContext } from '../AuthContext';
+import CircleNotificationsIcon from '@mui/icons-material/CircleNotifications';
+
 
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -65,7 +67,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 export default function NavBar() {
-    const {authenticated, user, creator} = React.useContext(AuthContext);
+    const {authenticated, user, creator, notifications} = React.useContext(AuthContext);
     const username = user;
     const navigate = useNavigate()
     const [searchQuery, setSearchQuery] = React.useState("")
@@ -78,7 +80,7 @@ export default function NavBar() {
       setSearchQuery("")
     }
     const [anchorEl, setAnchorEl] = React.useState(null);
-
+    
   const handleChange = (event) => {
     setAuth(event.target.checked);
   };
@@ -123,6 +125,19 @@ export default function NavBar() {
             Personal Blog 
           </Typography>
           
+          {authenticated&&<IconButton
+                size="large"
+                aria-label="notifications of current user"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={()=>{navigate("/404")}}
+                color="inherit"
+              >
+                <CircleNotificationsIcon />
+                {notifications!=0 &&<Typography sx={{fontSize:"10px", position:"relative", marginBottom:"10px"}}>
+                  +{notifications}
+                </Typography>}
+              </IconButton>}
           <form onSubmit={handleSearchSubmit}>
           <Search>
             <SearchIconWrapper>

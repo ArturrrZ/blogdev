@@ -25,6 +25,8 @@ function App() {
   const [user, setUser] = useState("")
   const [creator, setCreator] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [notifications, setNotifications] = useState(154);
+
   useEffect(() => {
     async function initializeAuth() {
       try {
@@ -45,7 +47,7 @@ function App() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <AuthContext.Provider value={{authenticated, setAuthenticated, user, setUser, creator, setCreator}}>
+    <AuthContext.Provider value={{authenticated, setAuthenticated, user, setUser, creator, setCreator, notifications, setNotifications}}>
     <BrowserRouter>
       <NavBar/>
       <div className='main-content'>
