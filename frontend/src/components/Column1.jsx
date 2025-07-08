@@ -15,7 +15,7 @@ function Column1(props) {
     const navigate = useNavigate();
     const {data} = props
     const [value, setValue] = React.useState('1');
-     const handleChange = (event, newValue) => {
+    const handleChange = (event, newValue) => {
     setValue(newValue);
   };
   return (

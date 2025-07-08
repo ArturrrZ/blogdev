@@ -25,5 +25,6 @@ urlpatterns = [
     path('webhooks/stripe/', views.stripe_webhook),
 
     path('notifications/all/', views.NotificationsListUpdateView.as_view()), #read_all(default=False), only_count(default=True) - for HTTP polling
+    path('notifications/mark-read/', views.NotificationsMarkReadView.as_view()),
     path('notifications/<int:id>/', views.NotificationRetrieveUpdateView.as_view()), #get, patch
 ]

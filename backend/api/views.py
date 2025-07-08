@@ -27,6 +27,12 @@ from datetime import datetime
 def home(request):
     return Response("home")
 
+class NotificationsMarkReadView(APIView):
+    def put(self, request):
+        print(request.data.get("ids"))
+        return HttpResponse("asd")
+
+
 class NotificationsListUpdateView(APIView):
     def get(self, request):
         read_all = request.query_params.get('read_all', 'false').lower() in ['true', 't', '1']
@@ -38,7 +44,8 @@ class NotificationsListUpdateView(APIView):
         if only_count:
             return  Response({"count": notifications.count()}, status=status.HTTP_200_OK)       
         serializer = NotificationSerializer(notifications, many=True)
-        return Response({"count": len(serializer.data), "notifications":serializer.data}, status=status.HTTP_200_OK)
+        unread_serializer = NotificationSerializer(notifications.filter(is_read=False), many=True)
+        return Response({"count": len(serializer.data), "all_notifications":serializer.data, "unread_notifications": unread_serializer.data}, status=status.HTTP_200_OK)
     def post(self, request):
         #read all
         updated_count = Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
