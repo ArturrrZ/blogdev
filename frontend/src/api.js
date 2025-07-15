@@ -1,7 +1,7 @@
 import axios from "axios"
 async function updateAccessToken() {
     try {
-        const res = await api.post("/api/accounts/refresh_token/")
+        const res = await api.get("/api/accounts/refresh_token/")
         return true
     }
     catch (err) {
@@ -26,6 +26,8 @@ api.interceptors.response.use(function (response) {
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
     console.log("error from interceptor")
+    console.log(error)
+    console.log(error.response)
     if (error.response.status === 401) {
         const updatedToken = await updateAccessToken();
         if (updatedToken) {

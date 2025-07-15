@@ -29,8 +29,20 @@ def home(request):
 
 class NotificationsMarkReadView(APIView):
     def put(self, request):
-        print(request.data.get("ids"))
-        return HttpResponse("asd")
+        mark_read = request.data.get("mark_read", True)
+        ids = request.data.get("ids", [])
+        mark_all = request.data.get("mark_all", False)
+        if mark_all:
+            updated_count = Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+            return Response({"message":f"{updated_count} notifications marked as read"}, status=status.HTTP_200_OK)
+        if mark_read:
+            Notification.objects.filter(user=request.user, is_read=False, id__in=ids).update(is_read=True)
+            return Response({"message":"marked as read"}, status=status.HTTP_200_OK)
+        else:
+            Notification.objects.filter(user=request.user, is_read=True, id__in=ids).update(is_read=False)
+            return Response({"message":"marked as unread"}, status=status.HTTP_200_OK)
+   
+        
 
 
 class NotificationsListUpdateView(APIView):
