@@ -13,24 +13,27 @@ import {useNavigate} from "react-router-dom"
 import Button from '@mui/material/Button';
 import { Typography } from '@mui/material';
 import Notification from '../components/Notification'
+import "../styles/notificationPage.css"
 
 function NotificationsPage() {
+  const {notifications, setNotifications} = useContext(AuthContext);
   const [loading, setLoading] = useState(true);
-    async function fetchNotifications(touchUnreadUseEffect = true){
+    async function fetchNotifications(){
       setLoading(true)
       try {
          const res = await api.get("/api/notifications/all/?only_count=false&read_all=true")
          setAllNotificationsData(res.data.all_notifications)
-        if (touchUnreadUseEffect) {setNotificationsData(res.data.unread_notifications)}
+        setNotificationsData(res.data.unread_notifications)
         setAllCount(res.data.count)
         setUnreadCount(res.data.unread_notifications.length)
+        setNotifications(res.data.unread_notifications.length)
       }
       catch(err){
         console.error(err)
       }
       
     }
-    const {notifications, setNotifications} = useContext(AuthContext);
+    
     const [notificationsData, setNotificationsData] = useState([])
     const [allNotificationsData, setAllNotificationsData] = useState([])
     const [allCount, setAllCount] = useState(0)
@@ -74,7 +77,7 @@ function NotificationsPage() {
     function markAllread(){
       let result = window.confirm("Are you sure you want to proceed?");
       if (result) {
-        console.log("mark all read")
+        api.put("/api/notifications/mark-read/", {'mark_all': true}).then(res=>{handleChange("1")}).catch(err=>{console.error(err)})
       }
     }
     useEffect(()=>{
@@ -82,11 +85,12 @@ function NotificationsPage() {
     }, [])
 
     useEffect(() => {
-      if (value === '1' && notificationsData.length > 0) {
+      if (value === '1' && notificationsData.length >= 0) {
         changePage(1, true);
       } else if (value === '2' && allNotificationsData.length > 0) {
        changePage(1, false);
      }
+     console.log(paginated)
      setLoading(false)
       }, [notificationsData, allNotificationsData]);
 
@@ -96,7 +100,7 @@ function NotificationsPage() {
   return (<Box>
     
     
-      <Box sx={{display: 'flex', flexDirection: 'column', margin: '0px 200px'}}>
+      <div className="notificationMain">
       <TabContext value={value}>
         <Box sx={{ width:"100%",display: 'flex', flexDirection:'row', justifyContent: 'space-evenly', borderBottom: 5, borderColor: 'divider' , backgroundColor: 'white', borderRadius: '15px 15px 0px 0px'}}>
           <TabList onChange={handleChange} aria-label="lab API tabs example" >
@@ -150,7 +154,7 @@ function NotificationsPage() {
         </TabPanel></Box>
         }
       </TabContext>
-      </Box>
+      </div>
     
     </Box>
   )

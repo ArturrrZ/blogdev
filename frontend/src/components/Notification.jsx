@@ -59,7 +59,7 @@ function Notification(props) {
     alignItems:'center', justifyContent:'space-between',
     flexWrap: 'wrap',
     minWidth: '100px',
-    height: '40px',
+    minHeight: "40px",
     '&:hover': {
     boxShadow: !isRead && '0 0 1px rgba(0, 0, 0, 0.6)', // glow эффект
     transform: isRead ? 'scale(1.0)': 'scale(1.01)', // лёгкое увеличение

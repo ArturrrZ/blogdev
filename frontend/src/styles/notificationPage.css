@@ -1,0 +1,11 @@
+.notificationMain {
+    margin: 0px 200px;
+}
+
+@media (max-width: 768px){
+    .notificationMain {
+        margin: 0px 7%;
+
+    }
+}
+
