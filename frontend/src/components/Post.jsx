@@ -30,10 +30,11 @@ function Post(props) {
   }, []); 
   const navigate = useNavigate();
     const {data, myPage} = props
+    console.log(data)
     const [showList, setShowList] = React.useState(false);
     const [deleted, setDeleted] = React.useState(false);
     // useState
-  const dateStringFromBackend = data.created;
+  const dateStringFromBackend = data.created_at;
   const dateObject = new Date(dateStringFromBackend);
   const formattedDate = dateObject.toLocaleDateString(); // "12/29/2023" (US format)
   const formattedDateTime = dateObject.toLocaleString();

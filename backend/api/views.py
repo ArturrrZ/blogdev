@@ -128,13 +128,14 @@ class PostReportLikeView(APIView):
             return Response({"message":"You unliked the post"}, status=status.HTTP_200_OK)
         else:
             post.likes.add(request.user)
-            Notification.objects.create(
-            user=post.author,
-            fromuser=request.user,
-            category='like',
-            message= f'{request.user.username} liked the post: "{post.title[:10]}"',
-            related_post=post
-            )
+            if request.user != post.author:
+                Notification.objects.create(
+                user=post.author,
+                fromuser=request.user,
+                category='like',
+                message= f'{request.user.username} liked the post: "{post.title[:10]}"',
+                related_post=post
+                )
             return Response({"message":"You liked the post"}, status=status.HTTP_200_OK)
 
 class CreatorDetailView(APIView):
@@ -145,6 +146,17 @@ class CreatorDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     def put(self, request):
         #update creator
+        #TODO
+        print(request.data)
+        new_greeting_message = request.data.get("greeting_message")
+        if new_greeting_message:
+            try:
+                request.user.subscription_plan.greeting_message = new_greeting_message
+                request.user.subscription_plan.save()
+            except AttributeError:
+                print("User does not have a subscription_plan.")
+            except Exception as e:
+                print(f"Unexpected error while updating greeting_message: {e}")    
         serializer = CreatorSerializer(instance=request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -187,8 +199,8 @@ class CreatorBecomeStripeView(APIView):
             return Response({"error":"You already a creator!"}, status=status.HTTP_400_BAD_REQUEST)
         price = request.data.get('price')
         greeting_message = request.data.get('greeting_message')
-        # print(price)
-        # print(greeting_message)
+        print(price)
+        print(greeting_message)
         if not price or not greeting_message:
             return Response({"error":"Both Price and Greeting message fields are required!"}, status=status.HTTP_400_BAD_REQUEST)
         try:

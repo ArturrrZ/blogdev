@@ -90,7 +90,7 @@ function NotificationsPage() {
       } else if (value === '2' && allNotificationsData.length > 0) {
        changePage(1, false);
      }
-     console.log(paginated)
+    //  console.log(paginated)
      setLoading(false)
       }, [notificationsData, allNotificationsData]);
 

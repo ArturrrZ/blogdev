@@ -10,7 +10,7 @@ function ProfileList() {
   useEffect(()=>{
       api.get("/api/my_subscriptions/")
       .then(res=>{
-        console.log(res.data)
+        // console.log(res.data)
         setSubscription(res.data);
         // setLoading
       })

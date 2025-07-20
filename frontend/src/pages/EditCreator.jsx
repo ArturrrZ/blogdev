@@ -34,6 +34,7 @@ function EditCreator() {
         instagram: '',
         youtube: '',
         about: '',
+        greeting_message: '',
         files: [],
         previewUrl: null,
     })
@@ -43,12 +44,14 @@ function EditCreator() {
         }
         api.get("/api/creator/")
         .then(res=>{
+            console.log(res.data)
             setFormData({
             first_name: res.data.first_name || "",
             last_name: res.data.last_name || "",
             instagram: res.data.instagram || "",
             youtube: res.data.youtube || "",
             about: res.data.about || "",
+            greeting_message: res.data.greeting_message || "",
             files: [],
             previewUrl: `${baseURL}${res.data.profile_picture}`,
             })
@@ -80,6 +83,7 @@ function EditCreator() {
       formDataObj.append('instagram', formData.instagram)
       formDataObj.append('youtube', formData.youtube)
       formDataObj.append('about', formData.about)
+      formDataObj.append('greeting_message', formData.greeting_message)
       if (formData.files.length > 0) {
         formDataObj.append('profile_picture', formData.files[0])
       }
@@ -140,6 +144,16 @@ function EditCreator() {
               multiline
               minRows={4}
               value={formData.about}
+              onChange={handleInputChange}
+            />
+            <TextField
+              name="greeting_message"
+              id="outlined-basic"
+              label="Greeting message"
+              variant="outlined"
+              multiline
+              minRows={4}
+              value={formData.greeting_message}
               onChange={handleInputChange}
             />
             <Button

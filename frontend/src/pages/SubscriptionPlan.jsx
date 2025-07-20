@@ -7,6 +7,8 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add';
 import api from '../api';
 import { AuthContext } from '../AuthContext';
+import TextField from '@mui/material/TextField';
+
 
 const NumberInput = React.forwardRef(function CustomNumberInput(props, ref) {
   return (
@@ -151,11 +153,12 @@ function SubscriptionPlan(props) {
     const username = user;
     const [loading, setLoading] = React.useState(true);
     const [price, setPrice] = React.useState(1);
+    const [greeting_message, setGreetingMessage] = React.useState("");
     function handleSubmit(e){
         e.preventDefault()
-        console.log(price)
         api.post('/api/creator/become/', {
-            price: price
+            price: price,
+            greeting_message: greeting_message
         })
         .then(res=>{
             setCreator(true)
@@ -183,6 +186,17 @@ function SubscriptionPlan(props) {
       <form onSubmit={handleSubmit} className='subscription_plan'>
       <p>Type desired price for the subscription in $</p>
       <NumberInput aria-label="Quantity Input" min={1} max={99} value={price} onChange={(e, val)=>{setPrice(val)}} />
+      <TextField
+        required
+        name="greeting_message"
+        id="outlined-basic"
+        label="Greeting message"
+        variant="outlined"
+        multiline
+        minRows={4}
+        value={greeting_message}
+        onChange={(e)=>{setGreetingMessage(e.target.value)}}
+      />
       <Button variant="contained" type='submit'>Create a subscription plan</Button>
       </form>
     </div>
