@@ -460,5 +460,5 @@ class UserCheckView(APIView):
             print()
             return Response({"username":request.user.username,"is_creator":request.user.is_creator, "is_authenticated":True}, status=status.HTTP_200_OK)
         else:
-            return Response({"username":"", "is_creator":False, "authenticated":False}, status=status.HTTP_200_OK)
+            return Response({"username":"", "is_creator":False, "is_authenticated":False}, status=status.HTTP_200_OK)
 #            

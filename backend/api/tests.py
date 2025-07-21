@@ -6,6 +6,7 @@ from .models import CustomUser, Post, Subscription, SubscriptionPlan, Notificati
 from django.shortcuts import get_object_or_404
 import json
 import os
+import time
 # Create your tests here.
 
 class APITestCase(TestCase):
@@ -17,7 +18,8 @@ class APITestCase(TestCase):
             "password":"testpassword"
         }
         #get creator cookies for next tests👇
-        CustomUser.objects.create_user(username="creator", password="creator", email="creator@gmail.com", is_creator=True)
+        creator_obj = CustomUser.objects.create_user(username="creator", password="creator", email="creator@gmail.com", is_creator=True)
+        SubscriptionPlan.objects.create(creator=creator_obj, price=1000, stripe_price_id='fake_stripe_id', greeting_message='Welcome')
         creator_login_response = self.client.post("/api/accounts/login_logout/", {
             "username": "creator",
             "password":"creator"
@@ -136,19 +138,18 @@ class APITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", response.data)
         self.assertEqual(response.data['error'], 'Invalid refresh token')
-    
     def test_me_view(self):
         not_authenticated_response = self.client.get("/api/accounts/me/")
         self.assertEqual(not_authenticated_response.status_code, status.HTTP_200_OK)     
         self.assertEqual(not_authenticated_response.data['is_creator'], False)     
-        self.assertEqual(not_authenticated_response.data['authenticated'], False)     
+        self.assertEqual(not_authenticated_response.data['is_authenticated'], False)     
         self.assertEqual(not_authenticated_response.data['username'], "") 
 
         self.client.cookies = self.creator_cookies #authenticate
         authenticated_response = self.client.get("/api/accounts/me/")
         self.assertEqual(authenticated_response.status_code, status.HTTP_200_OK)     
         self.assertEqual(authenticated_response.data['is_creator'], True)     
-        self.assertEqual(authenticated_response.data['authenticated'], True)     
+        self.assertEqual(authenticated_response.data['is_authenticated'], True)     
         self.assertEqual(authenticated_response.data['username'], "creator") 
     def test_creator_get(self):
         self.client.cookies = self.creator_cookies
@@ -384,7 +385,6 @@ class APITestCase(TestCase):
         self.assertEqual(locked_post['title'], "Locked Content")
         self.assertEqual(locked_post['image'], "hidden image")
         self.assertIsNone(locked_post['body'])
-    
     def test_my_subscriptions(self):
         self.client.cookies = self.user_cookies
         self.subscribe()
@@ -399,14 +399,18 @@ class APITestCase(TestCase):
         # +1 new post
         self.assertEqual(subscription['new_posts'], 0)
         self.client.get("/api/profile/creator/")
+        time.sleep(1)
         self.create_testpost()
+        time.sleep(1)
         response = self.client.get('/api/my_subscriptions/')
         subscription = response.data[0]
+        # print(response.data)
         self.assertEqual(subscription['new_posts'], 1)
         #mark as read
         self.client.get("/api/profile/creator/")
         response = self.client.get('/api/my_subscriptions/')
         subscription = response.data[0]
+        # print(response.data)
         self.assertEqual(subscription['new_posts'], 0)
 
 
@@ -415,14 +419,14 @@ class APITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
     #stripe
     def test_creator_become_unsuccessful(self):
-        creator = get_object_or_404(CustomUser, username='creator')
+        creator = get_object_or_404(CustomUser, username='another_creator')
         sub_plan = SubscriptionPlan.objects.create(
             creator = creator,
             price = 1000,#in cents
             stripe_price_id = 'unique-product-id',
             greeting_message = 'Hello, my new sub!',
         )
-        self.client.cookies = self.creator_cookies
+        self.client.cookies = self.another_creator_cookies
 
         response = self.client.post('/api/creator/become/', {'price': 10, 'greeting_message': 'Hello my new sub!'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -445,8 +449,8 @@ class APITestCase(TestCase):
     
     @patch("api.views.stripe.Price.create")  # заменить на путь до импорта stripe
     def test_successful_creation(self, mock_stripe_create):
-        self.client.cookies = self.creator_cookies
-        mock_stripe_create.return_value = type("obj", (object,), {"id": "fake_stripe_id"})
+        self.client.cookies = self.another_creator_cookies
+        mock_stripe_create.return_value = type("obj", (object,), {"id": "fake_stripe_id2"})
         data = {"price": 10, "greeting_message": "Thanks for subscribing!"}
         response = self.client.post("/api/creator/become/", data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -462,7 +466,7 @@ class APITestCase(TestCase):
         self.assertEqual(response.data['error'], 'You already subscribed')
 
         subscription.delete()
-        response = self.client.post('/api/subscribe/', {'username':'creator'})
+        response = self.client.post('/api/subscribe/', {'username':'another_creator'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['error'], 'No subscription plan for this user')
     
@@ -470,13 +474,6 @@ class APITestCase(TestCase):
     def test_checkout_session(self, mock_stripe_checkout):
         self.client.cookies = self.user_cookies
         mock_stripe_checkout.return_value = type("obj", (object,), {"url": "checkout_url.com"})
-
-        sub_plan = SubscriptionPlan.objects.create(
-            creator = get_object_or_404(CustomUser, username='creator'),
-            price = 1000,#in cents
-            stripe_price_id = 'unique-product-id',
-            greeting_message = 'Hello, my new sub!',
-        )
         response = self.client.post('/api/subscribe/', {'username':'creator'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['checkout_url'], 'checkout_url.com')
@@ -530,10 +527,7 @@ class APITestCase(TestCase):
     def test_stripe_webhook_checkout_session_completed(self,mock_send_mail, mock_construct_event):
         creator=get_object_or_404(CustomUser, username='creator')
         subscriber=get_object_or_404(CustomUser, username='user')
-        SubscriptionPlan.objects.create(
-            creator=creator, 
-            price=1000, stripe_price_id='stripe_price_id', 
-            greeting_message='Hello my new sub!')
+        
         event_payload = {
             "type": "checkout.session.completed",
             "data": {
@@ -556,17 +550,17 @@ class APITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         mock_send_mail.assert_called_once_with(
             subject='Greeting Message',
-            message='Hello my new sub!',
+            message=creator.subscription_plan.greeting_message,
             from_email=os.environ.get("EMAIL_HOST_USER"),
             recipient_list=['customeremail']
 )
         self.assertTrue(Subscription.objects.filter(creator=creator, subscriber=subscriber, stripe_subscription_id='sub_fake_1').exists())
         self.assertTrue(Notification.objects.filter(user=creator,fromuser=subscriber, category='subscription').exists())
-    
     def test_notifications_all(self):
         creator = get_object_or_404(CustomUser, username='creator')
         user = get_object_or_404(CustomUser, username='user')
         notification = Notification.objects.create(user=creator, category='other', message='some message from admin')
+        time.sleep(1)
         self.client.cookies = self.creator_cookies
         #first check
         response = self.client.get("/api/notifications/all/")
@@ -577,20 +571,21 @@ class APITestCase(TestCase):
         self.client.cookies = self.user_cookies
         post = self.create_testpost()
         self.subscribe()
-        print(post.id)
         self.client.put(f'/api/posts/report_like/{post.id}/')
         
         #second check
         self.client.cookies=self.creator_cookies
-        response = self.client.get("/api/notifications/all/?only_count=false")
+        response = self.client.get("/api/notifications/all/?only_count=false&read_all=true")
+        # print(response.data)
         # print(response.data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 2)
-        self.assertEqual(response.data['notifications'][0]['category'], 'like')
-        self.assertEqual(response.data['notifications'][0]['fromuser']['username'], 'user')
-        self.assertEqual(response.data['notifications'][1]['category'], 'other')
+        # print(response.data)
+        self.assertEqual(response.data['unread_notifications'][0]['category'], 'like')
+        self.assertEqual(response.data['unread_notifications'][0]['fromuser']['username'], 'user')
+        self.assertEqual(response.data['unread_notifications'][1]['category'], 'other')
         self.client.cookies = self.user_cookies
-        self.client.put(f'/api/posts/report_like/{post.id}/')
+        self.client.put(f'/api/posts/report_like/{post.id}/') #unlike
         
         #third check
         self.client.cookies=self.creator_cookies

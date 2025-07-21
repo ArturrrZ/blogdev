@@ -66,6 +66,7 @@ function CreatePost() {
       formDataObj.append('image', formData.files[0]);
     }    
     api.post("/api/creator/posts/", formDataObj, {
+      // TODO
       headers: {
         'Content-Type': 'multipart/form-data',
       }
