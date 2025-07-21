@@ -714,5 +714,28 @@ class APITestCase(TestCase):
         response = self.client.put("/api/notifications/mark-read/", {"mark_read":"true"},content_type='application/json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['error'], 'mark_read and mark_all fields have to be booleans')
-    
+    def test_notification_report(self):
+        post = self.create_testpost()
+        self.client.cookies = self.user_cookies
+        self.client.post(f"/api/posts/report_like/{post.id}/")
+
+        self.client.cookies = self.creator_cookies
+        response = self.client.get("/api/notifications/all/?only_count=false")
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(response.data['unread_notifications'][0]['message'], f'somebody reported the post: "{post.title}"')
+    def test_notification_like_own_post(self):
+        post = self.create_testpost()
+        self.client.cookies = self.creator_cookies
+        response = self.client.put(f"/api/posts/report_like/{post.id}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get("/api/notifications/all/")
+        self.assertEqual(response.data['count'], 0)
+        #unlike 
+        response = self.client.put(f"/api/posts/report_like/{post.id}/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get("/api/notifications/all/")
+        self.assertEqual(response.data['count'], 0)
+        
     #       
