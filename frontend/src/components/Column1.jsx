@@ -38,7 +38,7 @@ function Column1(props) {
             <Tab label="Media" value="2" />
           </TabList>
         </Box>
-        <TabPanel value="1" sx={{padding: "0px 0px"}}>{data.profile.posts.map((item)=>{return <Post key={item.id} data={item} myPage={data.my_page}/>})}</TabPanel>
+        <TabPanel value="1" sx={{padding: "0px 0px"}}>{data.profile.posts.map((item)=>{return <Post key={item.id} data={item} myPage={data.my_page} />})}</TabPanel>
         <TabPanel value="2" sx={{padding: "0px 0px"}}>Media:
         <div className='media'>{data.profile.posts.map((post)=>{return <MediaPost key={post.id} data={post}/>})}</div>
         </TabPanel>

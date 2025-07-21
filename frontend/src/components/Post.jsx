@@ -30,7 +30,7 @@ function Post(props) {
   }, []); 
   const navigate = useNavigate();
     const {data, myPage} = props
-    console.log(data)
+    // console.log(data)
     const [showList, setShowList] = React.useState(false);
     const [deleted, setDeleted] = React.useState(false);
     // useState
@@ -85,11 +85,11 @@ function Post(props) {
       <div className='post_top_part'>
       <div className='post_top_left'>{data.title}</div>
       <div className='post_top_right'>
-      <IconButton onClick={()=>{setShowList(!showList)}}><MoreHorizIcon/></IconButton>
+      {!locked&&<IconButton onClick={()=>{setShowList(!showList)}}><MoreHorizIcon/></IconButton>}
       {showList&&<Box className="post_list" sx={{ width: '100%', maxWidth: 200, boxShadow:3, bgcolor: 'background.paper' }}>
       <nav aria-label="main mailbox folders">
         <List>
-        {!myPage&&<ListItem disablePadding>
+        {!myPage &&<ListItem disablePadding>
             <ListItemButton disabled={isReported} onClick={handleReportClick}>
               <ListItemIcon>
                 <ReportIcon />

@@ -46,15 +46,17 @@ class APITestCase(TestCase):
         self.user_cookies = user_login_response.cookies
         self.client.delete("/api/accounts/login_logout/") #refresh token will be in token_blacklist
 
-    def create_testpost(self, creator=None, title=None, body=None):
+    def create_testpost(self, creator=None, title=None, body=None, is_paid=None):
         if creator is None:
             creator="creator"
         if title is None:
             title="test post"
         if body is None:
             body="test body"        
+        if is_paid is None:
+            is_paid=False
         creator = CustomUser.objects.get(username=creator)
-        return Post.objects.create(author=creator, title=title, body=body)    
+        return Post.objects.create(author=creator, title=title, body=body, is_paid=is_paid)    
     def subscribe(self, creator=None, subscriber=None, stripe_subscription_id=None):
         if creator is None:
             creator="creator"
@@ -259,7 +261,7 @@ class APITestCase(TestCase):
         self.assertEqual(duplicate_response.data['error'], 'You already reported this post')
         self.assertEqual(reported, unduplicated_reports)    
     def test_post_report_not_sub(self):
-        post = self.create_testpost()
+        post = self.create_testpost(is_paid=True)
         self.client.cookies = self.user_cookies
 
         response = self.client.post(f"/api/posts/report_like/{post.id}/")
@@ -292,7 +294,7 @@ class APITestCase(TestCase):
         self.assertEqual(unlike_response.data['message'], 'You unliked the post')
         self.assertEqual(unliked, liked - 1)
     def test_post_like_not_sub(self):
-        testpost = self.create_testpost()
+        testpost = self.create_testpost(is_paid=True)
         likes = testpost.likes.count()
         self.client.cookies = self.user_cookies
 
@@ -556,6 +558,7 @@ class APITestCase(TestCase):
 )
         self.assertTrue(Subscription.objects.filter(creator=creator, subscriber=subscriber, stripe_subscription_id='sub_fake_1').exists())
         self.assertTrue(Notification.objects.filter(user=creator,fromuser=subscriber, category='subscription').exists())
+    
     def test_notifications_all(self):
         creator = get_object_or_404(CustomUser, username='creator')
         user = get_object_or_404(CustomUser, username='user')
@@ -649,6 +652,67 @@ class APITestCase(TestCase):
         response = self.client.patch(f"/api/notifications/{notification.id}/")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(Notification.objects.filter(is_read=False, user=creator).count(), 1)
+    def test_notification_mark_read(self):
+        creator = get_object_or_404(CustomUser, username='creator')
+        notification = Notification.objects.create(user=creator, category='other', message='some message from admin')
+        notification_id = notification.id
+        self.client.cookies = self.creator_cookies
 
+        response = self.client.get("/api/notifications/all/")
+        self.assertEqual(response.data['count'], 1)
+        #mark read
+        response = self.client.put("/api/notifications/mark-read/", {"ids": [notification_id]}, content_type="application/json")
+        print(response.data)
+        self.assertEqual(response.data['message'], 'marked as read')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        time.sleep(1)
+        response = self.client.get("/api/notifications/all/")
+        self.assertEqual(response.data['count'], 0)
+        #mark unread
+        unread_response = self.client.put("/api/notifications/mark-read/", {"ids": [notification_id], "mark_read": False,}, content_type="application/json")
+        self.assertEqual(unread_response.data['message'], 'marked as unread')
+        self.assertEqual(unread_response.status_code, status.HTTP_200_OK)
+        
+        response = self.client.get("/api/notifications/all/")
+        self.assertEqual(response.data['count'], 1)
+    def test_notification_mark_read_all(self):
+        creator = get_object_or_404(CustomUser, username='creator')
+        Notification.objects.create(user=creator, category='other', message='some message from admin')
+        self.client.cookies = self.creator_cookies
 
+        response = self.client.get("/api/notifications/all/")
+        self.assertEqual(response.data['count'], 1)
+
+        response = self.client.put("/api/notifications/mark-read/", {"mark_all": True}, content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.get("/api/notifications/all/")
+        self.assertEqual(response.data['count'], 0)
+    def test_notification_mark_read_error(self):
+        creator = get_object_or_404(CustomUser, username='creator')
+        Notification.objects.create(user=creator, category='other', message='some message from admin')
+        self.client.cookies = self.creator_cookies
+
+        response = self.client.get("/api/notifications/all/")
+        self.assertEqual(response.data['count'], 1)
+
+        response = self.client.put("/api/notifications/mark-read/", {"ids": [1]})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'ids field have to be a list')
+
+        response = self.client.put("/api/notifications/mark-read/", {"ids": ["hello", True, False]}, content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'No notification IDs provided.')
+
+        response = self.client.put("/api/notifications/mark-read/", content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'No notification IDs provided.')
+
+        response = self.client.put("/api/notifications/mark-read/", {"mark_all":"true"},content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'mark_read and mark_all fields have to be booleans')
+
+        response = self.client.put("/api/notifications/mark-read/", {"mark_read":"true"},content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'mark_read and mark_all fields have to be booleans')
+    
     #       

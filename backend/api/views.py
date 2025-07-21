@@ -30,8 +30,17 @@ def home(request):
 class NotificationsMarkReadView(APIView):
     def put(self, request):
         mark_read = request.data.get("mark_read", True)
-        ids = request.data.get("ids", [])
         mark_all = request.data.get("mark_all", False)
+        ids = request.data.get("ids", [])
+        if not isinstance(mark_read, bool) or not isinstance(mark_all, bool):
+            return Response({"error":"mark_read and mark_all fields have to be booleans"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not isinstance(ids, list):
+            return Response({"error":"ids field have to be a list"}, status=status.HTTP_400_BAD_REQUEST)
+        ids = [id for id in ids if isinstance(id, int) and not isinstance(id, bool)]
+        if not mark_all and not ids:
+            return Response({"error": "No notification IDs provided."}, status=status.HTTP_400_BAD_REQUEST)
+        
         if mark_all:
             updated_count = Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
             return Response({"message":f"{updated_count} notifications marked as read"}, status=status.HTTP_200_OK)
@@ -100,6 +109,8 @@ class PostReportLikeView(APIView):
         try:
             subscription = Subscription.objects.get(creator=post.author, subscriber=self.request.user)
         except Subscription.DoesNotExist:
+            if not post.is_paid:
+                return post
             raise PermissionDenied("You are not subscribed!")
         
         if not subscription.is_active:
@@ -113,6 +124,12 @@ class PostReportLikeView(APIView):
         if post.reports.filter(id=request.user.id).exists():
             return Response({"error": "You already reported this post"}, status=status.HTTP_400_BAD_REQUEST)
         post.reports.add(request.user)
+        Notification.objects.create(
+        user=post.author,
+        category='other',
+        message= f'somebody reported the post: "{post.title[:10]}"',
+        related_post=post
+        )
         return Response({"message":"You reported the post"}, status=status.HTTP_201_CREATED)
     def put(self, request, id):
         #like/unlike the post
