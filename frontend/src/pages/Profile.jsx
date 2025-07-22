@@ -16,6 +16,7 @@ function Profile() {
     const [data, setData] = useState({})
     const navigate =  useNavigate()
     useEffect(()=>{
+        setLoading(true)
         api.get(`/api/profile/${username}/`)
         .then(res=>{
             setData(res.data)

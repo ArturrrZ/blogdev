@@ -519,10 +519,14 @@ class APITestCase(TestCase):
             content_type="application/json",
             HTTP_STRIPE_SIGNATURE="fake"
         )
-
         mock_send_mail.assert_called_once()
         self.assertEqual(response.status_code, 200)
         self.assertFalse(Subscription.objects.filter(stripe_subscription_id="sub_fake_1").exists())
+
+        self.client.cookies = self.creator_cookies
+        response = self.client.get("/api/notifications/all/?only_count=false")
+        self.assertEqual(response.data['unread_notifications'][0]['category'], 'subscription')
+        self.assertEqual(response.data['unread_notifications'][0]['message'], 'somebody unsubscribed from you')
 
     @patch("api.views.stripe.Webhook.construct_event")    
     @patch("api.views.send_mail")

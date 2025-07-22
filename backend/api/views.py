@@ -378,7 +378,8 @@ def stripe_webhook(request):
         #         from_email=os.environ.get("EMAIL_HOST_USER"),
         #         recipient_list=[subscriber_email])
         send_goodbye_email(fromemail=os.environ.get("EMAIL_HOST_USER"), toemail=[subscriber_email], creator_username=creator_username)
-
+        creator = get_object_or_404(CustomUser, username=creator_username)
+        Notification.objects.create(user=creator, category='subscription', message='somebody unsubscribed from you')
         #maybe send for analytics
         return HttpResponse(status=200)
     return HttpResponse(status=200)
