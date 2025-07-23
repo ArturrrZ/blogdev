@@ -11,7 +11,7 @@ async function updateAccessToken() {
 }
 
 const baseURLback = import.meta.env.VITE_API_URL
-const baseURLfront = import.meta.env.VITE_APP_URL
+const baseURLfront = import.meta.env.VITE_HOST_URL
 
 const api = axios.create({
     baseURL: baseURLback,

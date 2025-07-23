@@ -21,7 +21,7 @@ function Logout() {
               }, 1500)
         })
         .catch(err=>{
-            alert(err)
+            console.error(err)
         })
     }
 

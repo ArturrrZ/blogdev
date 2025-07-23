@@ -132,7 +132,7 @@ function NotificationsPage() {
             <Typography>Unread notifications: {unreadCount}</Typography>
             </Box>
           <Box>
-            <Button variant="contained" onClick={markAllread} sx={{height: '100%'}}>Mark all read</Button>  
+            <Button variant="contained" onClick={markAllread} sx={{height: '100%'}} disabled={unreadCount===0}>Mark all read</Button>  
           </Box>
         </Box>
   

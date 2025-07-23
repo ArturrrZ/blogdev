@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
     server: { port: 3000 },
     define: {
       'import.meta.env.VITE_API_URL': JSON.stringify(env.VITE_API_URL),
-      'import.meta.env.VITE_APP_URL': JSON.stringify(env.VITE_APP_URL),
+      'import.meta.env.VITE_HOST_URL': JSON.stringify(env.VITE_HOST_URL),
     }
   }
 })

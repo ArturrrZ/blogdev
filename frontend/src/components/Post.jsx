@@ -29,11 +29,11 @@ function Post(props) {
     }
   }, []); 
   const navigate = useNavigate();
-    const {data, myPage} = props
+    const {data, myPage, setIsAtLeastOneDeleted} = props
     // console.log(data)
     const [showList, setShowList] = React.useState(false);
     const [deleted, setDeleted] = React.useState(false);
-    // useState
+    // useState 
   const dateStringFromBackend = data.created_at;
   const dateObject = new Date(dateStringFromBackend);
   const formattedDate = dateObject.toLocaleDateString(); // "12/29/2023" (US format)
@@ -42,25 +42,19 @@ function Post(props) {
     const confirmDelete = window.confirm("Are you sure you want to delete this post?"); 
     if (confirmDelete) { 
       api.delete(`/api/creator/posts/${data.id}/`) 
-      .then(function(res) { setDeleted(true); 
+      .then(function(res) { 
+        setDeleted(true); 
+        setIsAtLeastOneDeleted(true)  
         console.log('Post deleted successfully');}) 
       .catch(err => { alert("An error occurred while deleting the post"); 
           console.error(err); }); } }
   const [isLiked, setIsLiked] = useState(data.is_liked);      
   const [likes, setLikes] = useState(data.likes);      
   const handleLikeClick = ()=>{
-    // TODO: send request to like the post
-    // data.id
-    console.log(data.id)
     api.put(`/api/posts/report_like/${data.id}/`)
     .then(res=>{
       setIsLiked(!isLiked);
-      if (isLiked) {
-        setLikes((prev)=> prev - 1)
-      }
-      else {
-        setLikes((prev) => prev + 1)
-      }
+      setLikes(res.data.likes_count)
     })
     .catch(err=>{console.log(err)})
     // setLikes
@@ -146,20 +140,15 @@ function Post(props) {
       <Divider sx={{margin: "10px 15px"}}/>
       <div className='post_info'>
       <div className='post_info_left_side'>
-      {!locked&&(
-      isLiked
-      ?<IconButton onClick={handleLikeClick}>
-          <FavoriteIcon sx={{color:'red'}} fontSize="small"/>
+      {!locked&&
+      <IconButton onClick={handleLikeClick}>
+          {isLiked
+          ?<FavoriteIcon sx={{color: 'red'}} fontSize="small"/>
+          :<FavoriteBorderIcon fontSize="small"/>
+          }
           <div className='post_likes'>{likes}</div>
-        </IconButton>
-      :<IconButton onClick={handleLikeClick}>
-          <FavoriteBorderIcon fontSize="small"/>
-          <div className='post_likes'>{likes}</div>
-        </IconButton>
-      )}
-        {/* <IconButton >
-          <ChatBubbleOutlineIcon fontSize="small"/>
-        </IconButton> */}
+        </IconButton>}
+
       </div>
       <div className='post_info_right_side'>
         {formattedDateTime}

@@ -7,33 +7,6 @@ import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
-// import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-
-// const VisuallyHiddenInput = styled('input')({
-//   clip: 'rect(0 0 0 0)',
-//   clipPath: 'inset(50%)',
-//   height: 1,
-//   overflow: 'hidden',
-//   position: 'absolute',
-//   bottom: 0,
-//   left: 0,
-//   whiteSpace: 'nowrap',
-//   width: 1,
-// });
-// <Button
-//       component="label"
-//       role={undefined}
-//       variant="contained"
-//       tabIndex={-1}
-//       startIcon={<CloudUploadIcon />}
-//     >
-//       Upload files
-//       <VisuallyHiddenInput
-//         type="file"
-//         onChange={(event) => console.log(event.target.files)}
-//         multiple
-//       />
-//     </Button>
 function Column0(props) {
     const {data} = props;
     const navigate = useNavigate()
@@ -55,7 +28,9 @@ function Column0(props) {
         <p className='profile_sub' >subscribers</p>
         {data.is_subscribed
         ?<Button disabled className='profile_button' variant="outlined" startIcon={<CheckBoxIcon/>}>Following</Button>
-        :(data.my_page?<Button onClick={()=>{navigate('/creator/edit/')}} className='profile_button' variant="contained">Edit Profile</Button>:<Button onClick={handleFollowClick} className='profile_button' variant="contained">Follow</Button>)}
+        :(data.my_page
+        ?<Button onClick={()=>{navigate('/creator/edit/')}} className='profile_button' variant="contained">Edit Profile</Button>
+        :<Button onClick={handleFollowClick} className='profile_button' variant="contained">Follow</Button>)}
         <div>
           {data.profile.youtube?
           <IconButton  size='large' onClick={()=>{window.open(data.profile.youtube)}}>

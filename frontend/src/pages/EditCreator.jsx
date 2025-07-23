@@ -23,7 +23,7 @@ const VisuallyHiddenInput = styled('input')({
   });
 
 function EditCreator() {
-    const baseURL = 'http://localhost:8000/';
+    const baseURL = import.meta.env.VITE_API_URL;
     const navigate = useNavigate();
     const {creator, user} = useContext(AuthContext);
     const is_creator = creator;
@@ -44,7 +44,7 @@ function EditCreator() {
         }
         api.get("/api/creator/")
         .then(res=>{
-            console.log(res.data)
+            // console.log(res.data)
             setFormData({
             first_name: res.data.first_name || "",
             last_name: res.data.last_name || "",
@@ -55,7 +55,7 @@ function EditCreator() {
             files: [],
             previewUrl: `${baseURL}${res.data.profile_picture}`,
             })
-            console.log(formData)   
+            // console.log(formData)   
     })
         .catch(err=>{console.log(err)})
     },
@@ -93,7 +93,7 @@ function EditCreator() {
         }
       })
       .then(res=>{
-        console.log(res.data)
+        // console.log(res.data)
         navigate(`/user/${username}`)
       })
       .catch((err)=>{

@@ -163,13 +163,10 @@ function SubscriptionPlan(props) {
         .then(res=>{
             setCreator(true)
             window.location.reload()
-            // navigate('/creator/edit/')
           })
         .catch(err=>{
             // for some reason err
             console.log(err)
-            // setCreator(true)
-            // navigate('/creator/edit/')
         })
     }
     useEffect(()=>{

@@ -136,13 +136,14 @@ class PostReportLikeView(APIView):
         post = self.get_post(id=id)
         if post.likes.filter(id=request.user.id).exists():
             post.likes.remove(request.user)
+            print(post.likes.count())
             Notification.objects.filter(
                 user=post.author,
                 fromuser=request.user,
                 category='like',
                 related_post=post
                 ).delete()
-            return Response({"message":"You unliked the post"}, status=status.HTTP_200_OK)
+            return Response({"message":"You unliked the post", "likes_count": post.likes.count()}, status=status.HTTP_200_OK)
         else:
             post.likes.add(request.user)
             if request.user != post.author:
@@ -153,7 +154,7 @@ class PostReportLikeView(APIView):
                 message= f'{request.user.username} liked the post: "{post.title[:10]}"',
                 related_post=post
                 )
-            return Response({"message":"You liked the post"}, status=status.HTTP_200_OK)
+            return Response({"message":"You liked the post", "likes_count": post.likes.count()}, status=status.HTTP_200_OK)
 
 class CreatorDetailView(APIView):
     permission_classes = [IsAuthenticated, IsCreator]

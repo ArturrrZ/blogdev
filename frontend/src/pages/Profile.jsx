@@ -20,7 +20,7 @@ function Profile() {
         api.get(`/api/profile/${username}/`)
         .then(res=>{
             setData(res.data)
-            console.log(res.data)
+            // console.log(res.data)
         })
         .catch(err=>{
             console.log(err)
@@ -32,14 +32,18 @@ function Profile() {
         <div>
             {loading?<p>Loading data...</p>:
             <div>
-                <div className='prof_top_part'><img height={'250px'} width={"100%"} alt='platform background picture' src='https://t3.ftcdn.net/jpg/03/27/51/56/360_F_327515607_Hcps04aaEc7Ki43d1XZPxwcv0ZaIaorh.jpg' /></div>
-                {data.profile.is_creator?
+                <div className='prof_top_part'>
+                <img height={'250px'} width={"100%"} alt='platform background picture' src='https://t3.ftcdn.net/jpg/03/27/51/56/360_F_327515607_Hcps04aaEc7Ki43d1XZPxwcv0ZaIaorh.jpg' />
+                </div>
+                {data.profile.is_creator
+                ?
                 <div>
                 {/* MAIN PAGE OF A CREATOR AFTER LOADING */}
                    {data.my_page?(<Creator data={data}/>):(
                     data.is_subscribed?<ProfileSubscribed data={data}/>:<ProfileNotSubscribed data={data}/>
                    )} 
-                </div>     
+                </div>
+                     
                 :(data.my_page?(<NotCreatorMypage />):<NotCreator username={username} />)
                 }
             </div>

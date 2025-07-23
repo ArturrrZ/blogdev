@@ -4,14 +4,14 @@ import { Button } from '@mui/material';
 
 function NotCreatorMypage() {
   const navigate = useNavigate();
-  const handelClick = ()=>{
+  const handleClick = ()=>{
     navigate("/creator/subscription_plan/")
   }
   return (
     <div className='not_creator'>
       <h3>You are not a creator</h3>
       <p>⬇️ If you want to become a creator, click the button below ⬇️</p>
-      <Button variant='contained' onClick={handelClick}>
+      <Button variant='contained' onClick={handleClick}>
         Become the creator
       </Button>
     </div>
