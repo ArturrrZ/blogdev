@@ -68,12 +68,16 @@ function EditCreator() {
              })); };
     const handleFileChange = (e) => {
          const files = Array.from(e.target.files);
-         const previewUrl = URL.createObjectURL(files[0]);
+         if (files.length > 1){alert('You can only upload one file.');}
+         else {
+          const previewUrl = URL.createObjectURL(files[0]);
           setFormData(prevFormData => ({ 
             ...prevFormData, 
             files: files,
             previewUrl: previewUrl,
-        })); };
+            }));
+         }
+          };
     const handleSubmit = (e) => {
       e.preventDefault(); // Prevent the default form submission behavior
       console.log(formData); // Log the current state

@@ -37,6 +37,7 @@ function EditPost3() {
     is_paid: false,
     currentImage: '',
     files: [],
+    previewUrl: '',
   });
 
   const [postCreated, setPostCreated] = useState(false);
@@ -79,9 +80,11 @@ function EditPost3() {
     if (selectedFiles.length > 1) {
       alert('You can only upload one file.');
     } else {
+      const previewUrl = URL.createObjectURL(selectedFiles[0]);
       setFormData((prev) => ({
         ...prev,
         files: selectedFiles,
+        previewUrl: previewUrl
       }));
     }
   };
@@ -153,7 +156,7 @@ function EditPost3() {
           <VisuallyHiddenInput type="file" onChange={handleFileChange} />
         </Button>
         {formData.currentImage && !formData.files[0] && <img src={formData.currentImage} width={200} height={200} alt="Current" />}
-        {formData.files.map((file, index) => <p key={index}>{file.name}</p>)}
+        {formData.previewUrl && <img src={formData.previewUrl} alt="Preview" height={200} width={200}/>}
         <div>
           <Checkbox name="is_paid" checked={formData.is_paid} onChange={handleInputChange} />
           <span>Paid content</span>

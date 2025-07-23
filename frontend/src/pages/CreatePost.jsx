@@ -30,6 +30,7 @@ function CreatePost() {
     body: '',
     is_paid: false,
     files: [],
+    previewUrl: '',
   });
   const formDataObj = new FormData();
   const [postCreated, setPostCreated] = useState(false);
@@ -47,9 +48,11 @@ function CreatePost() {
     if (selectedFiles.length > 1) {
       alert("You can only upload one file.");
     } else {
+      const previewUrl = URL.createObjectURL(selectedFiles[0])
       setFormData((prev) => ({
         ...prev,
         files: selectedFiles,
+        previewUrl: previewUrl,
       }));
     }
   };
@@ -129,7 +132,7 @@ function CreatePost() {
           Upload files
           <VisuallyHiddenInput type="file" onChange={handleFileChange} />
         </Button>
-        <div>{formData.files.map((file, index)=>{return <p key={index}>{file.name}</p>})}</div>
+        {formData.previewUrl && <img src={formData.previewUrl} alt="Preview" height={200} width={200}/>}
         <div>
           <Checkbox
             name="is_paid"
