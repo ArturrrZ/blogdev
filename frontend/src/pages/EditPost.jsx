@@ -25,7 +25,7 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
-function EditPost3() {
+function EditPost() {
   const {user} = useContext(AuthContext)
   const navigate = useNavigate();
   const { id } = useParams();
@@ -172,4 +172,4 @@ function EditPost3() {
   );
 }
 
-export default EditPost3;
+export default EditPost;
