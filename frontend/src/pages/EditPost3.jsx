@@ -43,6 +43,7 @@ function EditPost3() {
     const fetchPost = async () => {
       try {
         const res = await api.get(`/api/post/get/${id}/`);
+        console.log(res.data)
         setFormData({
           title: res.data.title,
           body: res.data.body,

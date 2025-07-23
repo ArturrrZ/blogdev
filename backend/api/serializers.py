@@ -28,7 +28,7 @@ class CreatorSerializer(serializers.ModelSerializer):
     greeting_message = serializers.SerializerMethodField()
     class Meta:
         model = CustomUser
-        fields = ('id', 'first_name', 'last_name', 'phone_number', 'profile_picture', 'about', 'background_picture', 'instagram', 'youtube', 'username', 'greeting_message')   
+        fields = ('id','first_name', 'last_name', 'phone_number', 'profile_picture', 'about', 'background_picture', 'instagram', 'youtube', 'username', 'greeting_message')   
     def get_greeting_message(self, obj):
         return obj.subscription_plan.greeting_message
 class PostSerializer(serializers.ModelSerializer):

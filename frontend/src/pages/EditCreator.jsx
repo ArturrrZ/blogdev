@@ -23,7 +23,6 @@ const VisuallyHiddenInput = styled('input')({
   });
 
 function EditCreator() {
-    const baseURL = import.meta.env.VITE_API_URL;
     const navigate = useNavigate();
     const {creator, user} = useContext(AuthContext);
     const is_creator = creator;
@@ -53,7 +52,7 @@ function EditCreator() {
             about: res.data.about || "",
             greeting_message: res.data.greeting_message || "",
             files: [],
-            previewUrl: `${baseURL}${res.data.profile_picture}`,
+            previewUrl: res.data.profile_picture,
             })
             // console.log(formData)   
     })

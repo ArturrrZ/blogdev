@@ -9,7 +9,7 @@ class CustomUser(AbstractUser):
     username = models.CharField(max_length=20, unique=True, blank=False, null=False)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     is_creator = models.BooleanField(default=False)
-    profile_picture = models.ImageField(null=True, blank=True)
+    profile_picture = models.ImageField(null=True, blank=True, upload_to='images/')
     about = models.TextField(null=True, blank=True)
     background_picture = models.ImageField(null=True, blank=True)
     instagram = models.URLField(null=True, blank=True)   

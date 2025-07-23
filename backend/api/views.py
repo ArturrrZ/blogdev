@@ -87,6 +87,8 @@ class NotificationRetrieveUpdateView(APIView):
 
 class MySubscriptionsView(APIView):
     def get(self, request):
+        print(request.path)
+        print(f"Request comes from {request.headers['referer']} to host: {request.headers['host']}")
         subscriptions = request.user.subscriptions.all()
         serializer = SubscriptionSerializer(subscriptions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -160,7 +162,7 @@ class CreatorDetailView(APIView):
     permission_classes = [IsAuthenticated, IsCreator]
     def get(self, request):
         #receive info to view or edit
-        serializer = CreatorSerializer(request.user)
+        serializer = CreatorSerializer(request.user, context={"request":request})
         return Response(serializer.data, status=status.HTTP_200_OK)
     def put(self, request):
         #update creator
