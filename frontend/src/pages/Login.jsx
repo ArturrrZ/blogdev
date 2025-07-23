@@ -25,7 +25,6 @@ function Login() {
         })
         .then(response=>{
             console.log(response.data)
-            sessionStorage.setItem("access_token_expiration", response.data.expiration)
             setAuthenticated(true)
             setUser(response.data.username)
             // console.log(response.data)

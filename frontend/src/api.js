@@ -9,8 +9,9 @@ async function updateAccessToken() {
         return false
     } 
 }
-const baseURLback = "http://localhost:8000/"
-const baseURLfront = "http://localhost:3000/"
+
+const baseURLback = import.meta.env.VITE_API_URL
+const baseURLfront = import.meta.env.VITE_APP_URL
 
 const api = axios.create({
     baseURL: baseURLback,

@@ -26,7 +26,7 @@ function App() {
   const [creator, setCreator] = useState(false)
   const [loading, setLoading] = useState(true)
   const [notifications, setNotifications] = useState(0);
-
+  console.log(import.meta.env.VITE_API_URL)
   useEffect(() => {
     async function initializeAuth() {
       try {

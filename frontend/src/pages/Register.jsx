@@ -35,7 +35,7 @@ function Register() {
             setTimeout(()=>{setImproperEmail(false)}, 3000)
             return 1
         }
-        console.log(form);
+        // console.log(form);
         api.post("/api/accounts/register/", {
             "username": form.username,
             "password": form.password,
@@ -46,7 +46,7 @@ function Register() {
             setTimeout(()=>{navigate("/login")}, 3000)            
         })
         .catch(err=>{
-            console.log(err)
+            console.error(err)
             setErr(true);
             setTimeout(()=>{setErr(false)}, 3000)
         })
