@@ -448,7 +448,7 @@ class APITestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['error'], 'Price must be a number')
     
-    @patch("api.views.stripe.Price.create")  # заменить на путь до импорта stripe
+    @patch("api.views.stripe.Price.create")  
     def test_successful_creation(self, mock_stripe_create):
         self.client.cookies = self.another_creator_cookies
         mock_stripe_create.return_value = type("obj", (object,), {"id": "fake_stripe_id2"})

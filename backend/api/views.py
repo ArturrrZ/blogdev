@@ -544,7 +544,6 @@ def stripe_webhook(request):
             print("Email has been sent")
         except Exception as e:
             print(f"Failed to send greeting email: {e}")
-        #TODO send a notification to the creator
         Notification.objects.create(
             user=creator,
             fromuser=subscriber,
@@ -641,7 +640,7 @@ class LoginLogoutView(APIView):
                 token = RefreshToken(refresh)
                 token.blacklist()
             except (TokenError, InvalidToken):
-                pass  # Можно логировать или просто игнорировать
+                pass  #can ignore or log the error
 
         response = Response({"message":"You logged out!"}, status=status.HTTP_200_OK)
         response.delete_cookie("access_token")
