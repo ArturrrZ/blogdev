@@ -23,13 +23,30 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 from .send_goodbye_email import send_goodbye_email
 from django.utils import timezone
 from datetime import datetime
-@api_view(['GET'])
-def home(request):
-    return Response("home")
 
 class NotificationsMarkReadView(APIView):
-    
+    """
+    API endpoint to mark notifications as read or unread.
+
+    PUT:
+    - Accepts a list of notification IDs and boolean flags 'mark_read' and 'mark_all'.
+    - If 'mark_all' is True, marks all notifications as read for the user.
+    - If 'mark_read' is True, marks provided notifications as read.
+    - If 'mark_read' is False, marks provided notifications as unread.
+    - Returns a message with the result of the operation.
+    """
     def put(self, request):
+        """
+        Mark notifications as read or unread.
+
+        Request body:
+        - mark_read (bool): Mark as read (default True)
+        - mark_all (bool): Mark all as read (default False)
+        - ids (list): List of notification IDs
+
+        Returns:
+        - message: Result of the operation
+        """
         mark_read = request.data.get("mark_read", True)
         mark_all = request.data.get("mark_all", False)
         ids = request.data.get("ids", [])
@@ -51,13 +68,35 @@ class NotificationsMarkReadView(APIView):
         else:
             Notification.objects.filter(user=request.user, is_read=True, id__in=ids).update(is_read=False)
             return Response({"message":"marked as unread"}, status=status.HTTP_200_OK)
-   
-        
-
-
+          
 class NotificationsListUpdateView(APIView):
+    """
+    API endpoint to retrieve and update user notifications.
+    HTTP POLLING is used to get notifications count every 60 seconds - default behaviour of GET.
 
+    GET:
+    - Query params:
+        - read_all (bool - default False): If True, returns all notifications. If False, returns only unread notifications.
+        - only_count (bool - default True): If True, returns only the count of notifications.
+    - Returns a list of notifications and their count.
+
+    POST:
+    - Marks all notifications as read for the user.
+    - Returns a message with the number of notifications marked as read.
+    """
     def get(self, request):
+        """
+        Retrieve notifications for the authenticated user.
+
+        Query parameters:
+        - read_all (bool): Return all notifications if True, unread only if False.
+        - only_count (bool): Return only the count if True.
+
+        Returns:
+        - count: Number of notifications
+        - all_notifications: List of all notifications (if only_count is False)
+        - unread_notifications: List of unread notifications (if only_count is False)
+        """
         read_all = request.query_params.get('read_all', 'false').lower() in ['true', 't', '1']
         only_count = request.query_params.get('only_count', 'true').lower() in ['true', 't', ] #HTTP polling
         notifications = Notification.objects.filter(user=request.user).order_by('-timestamp')
@@ -70,16 +109,34 @@ class NotificationsListUpdateView(APIView):
         unread_serializer = NotificationSerializer(notifications.filter(is_read=False), many=True)
         return Response({"count": len(serializer.data), "all_notifications":serializer.data, "unread_notifications": unread_serializer.data}, status=status.HTTP_200_OK)
     def post(self, request):
+        """
+        (Old method. New method is PUT in NotificationsMarkReadView)
+        Mark all notifications as read for the authenticated user.
+        """
         #read all
         updated_count = Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         return Response({"message":f"{updated_count} notifications marked as read"}, status=status.HTTP_200_OK)
 
 class NotificationRetrieveUpdateView(APIView):
+    """
+    (OLD method. New method is PUT in NotificationsMarkReadView)
+    API endpoint to retrieve and update a specific notification.
+    """
+    
     def get(self, request, id):
+        """
+        Retrieve a specific notification by ID for the authenticated user.
+        If the notification does not exist or does not belong to the user, returns a 404 error.
+        """
+        
         notification = get_object_or_404(Notification, id=id, user=request.user)
         serializer = NotificationSerializer(notification)
         return Response(serializer.data, status=status.HTTP_200_OK)
     def patch(self, request, id):
+        """
+        Mark a specific notification as read by ID for the authenticated user.
+        """
+        
         notification = get_object_or_404(Notification, id=id, user=request.user)
         if notification.is_read:
             return Response({"error":"You already marked this notification as read"}, status=status.HTTP_400_BAD_REQUEST)
@@ -88,14 +145,30 @@ class NotificationRetrieveUpdateView(APIView):
         return Response({"message":f"You marked this notification as read, id: {id}"}, status=status.HTTP_200_OK)
 
 class MySubscriptionsView(APIView):
+
+    """
+    API endpoint to retrieve the authenticated user's subscriptions.
+    GET:
+    - Returns a list of subscriptions for the authenticated user.
+    - Each subscription includes the creator's username, profile picture, and whether the user is subscribed
+    """
+    
     def get(self, request):
-        print(request.path)
-        print(f"Request comes from {request.headers.get('referer')} to host: {request.headers.get('host')}")        
+        # print(request.path)
+        # print(f"Request comes from {request.headers.get('referer')} to host: {request.headers.get('host')}")        
         subscriptions = request.user.subscriptions.all()
         serializer = SubscriptionSerializer(subscriptions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class ProfileView(APIView):
+    """
+    API endpoint to retrieve a user's profile by username
+    Includes information about whether the authenticated user is subscribed to the profile's creator or owns this page.
+    Includes posts of the creator and background image if applicable or default background image.
+    GET:
+    - Retrieves the profile of a user by username.
+    """
+    
     permission_classes = [IsAuthenticated]
     def get(self, request, username):
         profile = get_object_or_404(CustomUser, username=username)
@@ -110,7 +183,24 @@ class ProfileView(APIView):
         return Response({"profile":serializer.data, "my_page": profile.id == request.user.id, "is_subscribed": is_subscribed, "background_image": background_image}, status=status.HTTP_200_OK)
 
 class PostReportLikeView(APIView):
+    """
+    API endpoint to report or like/unlike a post
+    POST:
+    - Reports a post if the user is not the author and has not reported it before.
+    - Returns a message indicating the report status.
+    PUT:
+    - Likes a post if the user has not liked it before, or unlikes it if the user has already liked it.
+    - Returns a message indicating the like/unlike status and the updated likes count.
+    """
+    
     def get_post(self, id):
+        """
+        Retrieve a post by ID and checks 
+        whether the user posted it 
+        or subscribed to the creator 
+        or the post is not paid.
+        """
+        
         post = get_object_or_404(Post, id=id)
         if post.author == self.request.user:
             return post
@@ -125,7 +215,10 @@ class PostReportLikeView(APIView):
             raise PermissionDenied("Your subscription is not active!")
         return post
     def post(self, request, id):
-        #report the post
+
+        """
+        Report a post if the user is not the author and has not reported it before.
+        """
         post = self.get_post(id=id)
         if post.author == request.user:
             return Response({"error": "You cannot report your own post"}, status=status.HTTP_400_BAD_REQUEST)
@@ -140,7 +233,11 @@ class PostReportLikeView(APIView):
         )
         return Response({"message":"You reported the post"}, status=status.HTTP_201_CREATED)
     def put(self, request, id):
-        #like/unlike the post
+
+        """
+        Likes/unlikes a post.
+        """
+        
         post = self.get_post(id=id)
         if post.likes.filter(id=request.user.id).exists():
             post.likes.remove(request.user)
@@ -165,15 +262,30 @@ class PostReportLikeView(APIView):
             return Response({"message":"You liked the post", "likes_count": post.likes.count()}, status=status.HTTP_200_OK)
 
 class CreatorDetailView(APIView):
+    """
+    API endpoint to retrieve and update a creator's profile.
+    GET:
+    - Retrieves the creator's profile information.
+    PUT:
+    - Updates the creator's profile information, including the greeting message.
+    """
+    
     permission_classes = [IsAuthenticated, IsCreator]
     def get(self, request):
-        #receive info to view or edit
+
+        """
+        Retrieve the current user's profile information.
+        """
+
         serializer = CreatorSerializer(request.user, context={"request":request})
         return Response(serializer.data, status=status.HTTP_200_OK)
     def put(self, request):
-        #update creator
-        #TODO
-        print(request.data)
+
+        """
+        Update the current user's profile information and greeting message.
+        If the user does not have a subscription plan, it will not update the greeting message.
+        """
+        # print(request.data)
         new_greeting_message = request.data.get("greeting_message")
         if new_greeting_message:
             try:
@@ -188,6 +300,14 @@ class CreatorDetailView(APIView):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)    
 class PostCreateView(APIView):
+    """
+    API endpoint to create a new post.
+    POST:
+    - Creates a new post with the provided data.
+    - Requires the user to be authenticated and a creator.
+    - Returns a success message upon successful creation.
+    """
+    
     permission_classes = [IsAuthenticated, IsCreator]
     def post(self, request):
         serializer = PostSerializer(data=request.data)
@@ -195,8 +315,24 @@ class PostCreateView(APIView):
         serializer.save(author=request.user)
         return Response({"message":"You successfully created a post!"}, status=status.HTTP_201_CREATED)
 class PostDetailView(APIView):
+    """
+    API endpoint to retrieve, update, or delete a specifit post by its ID.
+    GET:
+    - Retrieves a post by its ID.
+    PUT:
+    - Updates a post by its ID with the provided data.
+    DELETE:
+    - Deletes a post by its ID.
+    Requires the user to be authenticated and a creator.
+    Raises a PermissionDenied exception if the user is not the author of the post.
+    """
+    
     permission_classes = [IsAuthenticated, IsCreator]
     def get_post(self, pk):
+        """
+        Retrieve a post by its ID and check if the user is the author.
+        """
+        
         post = get_object_or_404(Post, id=pk)
         if self.request.user != post.author:
             raise PermissionDenied("This is not your post!") #403
@@ -219,6 +355,16 @@ class PostDetailView(APIView):
 
 #STRIPE below
 class CreatorBecomeStripeView(APIView):
+    """
+    API endpoint to become a creator with Stripe.
+    POST:
+    - Requires the user to be authenticated and not already a creator.
+    - Accepts price and greeting_message in the request data.
+    - Creates a Stripe price and a SubscriptionPlan in the database.
+    - Returns a success message with the subscription ID and Stripe price ID.
+    - Returns an error if the user is already a creator or if required fields are missing.
+    """
+    
     permission_classes = [IsAuthenticated]
     def post(self, request):
         if SubscriptionPlan.objects.filter(creator=request.user).exists():
@@ -261,6 +407,16 @@ class CreatorBecomeStripeView(APIView):
             return Response({"error":"Server Error"}, status=500)  
 
 class CheckoutSessionView(APIView):
+    """
+    API endpoint to create a Stripe checkout session for a subscription.
+    POST:
+    - Requires the user to be authenticated.
+    - Accepts a username in the request data to identify the creator.
+    - Checks if the user is already subscribed to the creator.
+    - Creates a Stripe checkout session with the creator's subscription plan.
+    - Returns the checkout URL for the frontend to redirect the user to Stripe for payment.
+    """
+    
     permission_classes = [IsAuthenticated]  
 
     def post(self, request):
@@ -297,11 +453,28 @@ class CheckoutSessionView(APIView):
             print(e)
             return Response({"message":"Server error"}, status.HTTP_500_INTERNAL_SERVER_ERROR)  
 class SuccessView(TemplateView):
+    """
+    API endpoint to render a success page after a successful payment.
+    """
+    
     template_name = 'success.html'
 class CancelView(TemplateView):
+    """
+    API endpoint to render a cancel page after a failed payment.
+    """
+    
     template_name = 'cancel.html'
 
 class SubscriptionCancelView(APIView):
+    """
+    API endpoint to cancel a user's subscription.
+    POST:
+    - Requires the user to be authenticated.
+    - Accepts a username in the request data to identify the creator.
+    - Checks if the user is subscribed to the creator.
+    - Cancels the Stripe subscription and removes the subscription from the database.
+    """
+    
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -318,6 +491,16 @@ class SubscriptionCancelView(APIView):
        
 @csrf_exempt
 def stripe_webhook(request):
+    """
+    Webhook endpoint to handle Stripe events.
+    Handles events such as checkout session completion, subscription trial ending, and subscription cancellation.
+    - Processes the event and updates the database accordingly.
+    - Sends a greeting email to the subscriber upon successful subscription.
+    - Sends a goodbye email to the subscriber upon subscription cancellation.
+    - Creates notifications for the creator about new subscriptions and cancellations.
+    - Returns a 200 status code for successful processing or 400 for errors.
+    """
+    
     print("WEBHOOK -----------------------------------------------------")
     payload = request.body
     sig_header = request.META['HTTP_STRIPE_SIGNATURE']
@@ -396,6 +579,10 @@ def stripe_webhook(request):
 
 # Authentication below #
 class RegisterView(APIView):
+    """
+    API endpoint to register a new user.
+    """
+    
     permission_classes = [AllowAny]
     def post(self, request):
         serializer = CustomUserSerializer(data=request.data)
@@ -406,6 +593,15 @@ class RegisterView(APIView):
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
 class LoginLogoutView(APIView):
+    """
+    API endpoint to log in and log out a user.
+    POST:
+    - Authenticates the user with username and password.
+    - Returns access and refresh tokens in cookies.
+    DELETE:
+    - Logs out the user by blacklisting the refresh token and deleting cookies.
+    """
+    
     permission_classes = [AllowAny]
     def post(self, request):
         username = request.data.get('username')
@@ -453,6 +649,14 @@ class LoginLogoutView(APIView):
         return response
     
 class RefreshView(APIView):
+    """
+    API endpoint to refresh the access token using the refresh token.
+    GET:
+    - Requires the user to provide a refresh token in cookies.
+    - Validates the refresh token and generates a new access token.
+    - Returns the new access token in a cookie.
+    """
+    
     permission_classes=[AllowAny]
 
     def get(self, request):
@@ -481,6 +685,11 @@ class RefreshView(APIView):
             return response
         
 class UserCheckView(APIView):
+    """
+    API endpoint to return the username, creator status, and authentication status of the user.
+    Initial request from the frontend to check esssential user information.
+    """
+    
     permission_classes = [AllowAny]
     def get(self, request):
         if request.user and request.user.is_authenticated:
