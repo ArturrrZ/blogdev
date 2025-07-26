@@ -28,6 +28,7 @@ def home(request):
     return Response("home")
 
 class NotificationsMarkReadView(APIView):
+    
     def put(self, request):
         mark_read = request.data.get("mark_read", True)
         mark_all = request.data.get("mark_all", False)
@@ -55,6 +56,7 @@ class NotificationsMarkReadView(APIView):
 
 
 class NotificationsListUpdateView(APIView):
+
     def get(self, request):
         read_all = request.query_params.get('read_all', 'false').lower() in ['true', 't', '1']
         only_count = request.query_params.get('only_count', 'true').lower() in ['true', 't', ] #HTTP polling
@@ -88,7 +90,7 @@ class NotificationRetrieveUpdateView(APIView):
 class MySubscriptionsView(APIView):
     def get(self, request):
         print(request.path)
-        print(f"Request comes from {request.headers['referer']} to host: {request.headers['host']}")
+        print(f"Request comes from {request.headers.get('referer')} to host: {request.headers.get('host')}")        
         subscriptions = request.user.subscriptions.all()
         serializer = SubscriptionSerializer(subscriptions, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

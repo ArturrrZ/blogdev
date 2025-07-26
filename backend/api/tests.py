@@ -390,7 +390,6 @@ class APITestCase(TestCase):
     def test_my_subscriptions(self):
         self.client.cookies = self.user_cookies
         self.subscribe()
-        
         response = self.client.get('/api/my_subscriptions/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         
