@@ -385,7 +385,7 @@ class APITestCase(TestCase):
         self.assertEqual(response.data['profile']['posts_paid'], 1)
         locked_post = response.data['profile']['posts'][0]
         self.assertEqual(locked_post['title'], "Locked Content")
-        self.assertEqual(locked_post['image'], "hidden image")
+        self.assertEqual(locked_post['image'], '/static/api/locked_content.jpg')
         self.assertIsNone(locked_post['body'])
     def test_my_subscriptions(self):
         self.client.cookies = self.user_cookies
