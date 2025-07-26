@@ -82,7 +82,6 @@ function App() {
         <Route path='/creator/subscription_plan/' element={<ProtectedRoute><SubscriptionPlan/></ProtectedRoute>}/>
         <Route path='/creator/edit/' element={<CreatorRoute><EditCreator/></CreatorRoute>}/>
         <Route path='/post/create' element={<CreatorRoute><CreatePost /></CreatorRoute>}/>        
-        {/* // TODO CHECK BELOW */}
         <Route path='/post/edit/:id/' element={<CreatorRoute><EditPost/></CreatorRoute>}/>
         <Route path='/notifications/' element={<ProtectedRoute><NotificationsPage/></ProtectedRoute>}/>
         <Route path='/404' element={<NotFound/>}/>

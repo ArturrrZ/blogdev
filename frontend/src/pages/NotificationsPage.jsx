@@ -22,7 +22,7 @@ function NotificationsPage() {
       setLoading(true)
       try {
          const res = await api.get("/api/notifications/all/?only_count=false&read_all=true")
-         setAllNotificationsData(res.data.all_notifications)
+        setAllNotificationsData(res.data.all_notifications)
         setNotificationsData(res.data.unread_notifications)
         setAllCount(res.data.count)
         setUnreadCount(res.data.unread_notifications.length)
@@ -41,7 +41,6 @@ function NotificationsPage() {
     const [page, setPage] = useState(1)
     const [paginated, setPaginated] = useState([])
     const [all, setAll] = useState(false)
-    const pagesMarkedRead = useRef([])
     const [value, setValue] = useState('1');
      const handleChange = async (event, newValue) => {
       setValue(newValue);
@@ -60,19 +59,6 @@ function NotificationsPage() {
       setPaginated(currentPageNotifications);
       setPage(pageNum);
 
-      // if (!all && !pagesMarkedRead.current.includes(pageNum)) {
-      //   // mark as read from pagination 
-      //   const ids = currentPageNotifications.map(not => not.id);
-      //   api.put("/api/notifications/mark-read/", {
-      //     "ids": ids
-      //    })
-      //   .then((res) => {
-      //     console.log(res.data)
-      //     pagesMarkedRead.current.push(pageNum);
-      //     console.log(pagesMarkedRead.current)
-      //   })
-      //   .catch(err=>{console.error("Error: ", err)})
-      // }
     }
     function markAllread(){
       let result = window.confirm("Are you sure you want to proceed?");
@@ -94,7 +80,7 @@ function NotificationsPage() {
      setLoading(false)
       }, [notificationsData, allNotificationsData]);
 
-
+        // TODO check for error
     const totalUnreadPages = Math.ceil(notificationsData.length / 10);
     const totalAllPages = Math.ceil(allNotificationsData.length / 10);
   return (<Box>
