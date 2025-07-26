@@ -1,0 +1,5 @@
+---------------DEV MODE with Docker------------------------
+stripe login ..
+stripe listen --forward-to localhost:8000/api/webhooks/stripe/
+- get the api key and put into .env
+docker compose up --build
