@@ -101,7 +101,11 @@ class ProfileView(APIView):
         if is_subscribed and request.user.id != profile.id:
             Subscription.objects.filter(creator=profile, subscriber=request.user).update(last_visited=timezone.now())
         serializer = ProfileSerializer(profile, context={'is_subscribed': is_subscribed, 'my_page': profile.id == request.user.id, "request":request,}) 
-        return Response({"profile":serializer.data, "my_page": profile.id == request.user.id, "is_subscribed": is_subscribed})
+        if profile.background_picture:
+            background_image = profile.background_picture.url
+        else:
+            background_image = settings.PLATFORM_BACKGROUND_IMAGE    
+        return Response({"profile":serializer.data, "my_page": profile.id == request.user.id, "is_subscribed": is_subscribed, "background_image": background_image}, status=status.HTTP_200_OK)
 
 class PostReportLikeView(APIView):
     def get_post(self, id):

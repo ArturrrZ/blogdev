@@ -12,6 +12,7 @@ import NotCreatorMypage from '../components/NotCreatorMypage'
 
 function Profile() {
     const {username} = useParams()
+    const baseURLback = import.meta.env.VITE_API_URL
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState({})
     const navigate =  useNavigate()
@@ -20,7 +21,9 @@ function Profile() {
         api.get(`/api/profile/${username}/`)
         .then(res=>{
             setData(res.data)
-            // console.log(res.data)
+            console.log(res.data)
+            //   src={data.profile.background_image || defaultImageUrl}
+
         })
         .catch(err=>{
             console.log(err)
@@ -33,7 +36,9 @@ function Profile() {
             {loading?<p>Loading data...</p>:
             <div>
                 <div className='prof_top_part'>
-                <img height={'250px'} width={"100%"} alt='platform background picture' src='https://t3.ftcdn.net/jpg/03/27/51/56/360_F_327515607_Hcps04aaEc7Ki43d1XZPxwcv0ZaIaorh.jpg' />
+                <img height={'250px'} width={"100%"} alt='platform background picture or profile bg pic(later on)' 
+                src={baseURLback + data.background_image}
+                />
                 </div>
                 {data.profile.is_creator
                 ?

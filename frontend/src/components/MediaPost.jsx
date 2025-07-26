@@ -27,7 +27,7 @@ function MediaPost(props) {
             width={'200px'}
             height={'200px'} 
             className='post_media_img' 
-            src='https://media.istockphoto.com/id/936681148/vector/lock-icon.jpg?s=612x612&w=0&k=20&c=_0AmWrBagdcee-KDhBUfLawC7Gh8CNPLWls73lKaNVA='
+            src={import.meta.env.VITE_API_URL + data.image}
             alt='locked image'
             />}
             <Dialog

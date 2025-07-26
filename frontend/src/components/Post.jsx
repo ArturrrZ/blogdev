@@ -118,12 +118,12 @@ function Post(props) {
       src={data.image}
       onClick={() => setOpen(true)}   
       />}
-      {locked&&
+      {locked&&(data.image && 
       <img 
       className='post_img' 
-      src='https://media.istockphoto.com/id/936681148/vector/lock-icon.jpg?s=612x612&w=0&k=20&c=_0AmWrBagdcee-KDhBUfLawC7Gh8CNPLWls73lKaNVA='
+      src={import.meta.env.VITE_API_URL + data.image}
       alt='locked image'
-      />}
+      />)}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}

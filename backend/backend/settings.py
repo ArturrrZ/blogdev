@@ -128,7 +128,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
+PLATFORM_BACKGROUND_IMAGE = "/static/api/my_bg.jpg"
+PLATFORM_LOCKED_CONTENT = "/static/api/locked_content.jpg"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

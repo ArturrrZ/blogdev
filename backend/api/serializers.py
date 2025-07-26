@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import CustomUser, Post, Subscription, Notification
+from django.conf import settings
 
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -78,7 +79,7 @@ class ProfileSerializer(serializers.ModelSerializer):
                 if post.get('is_paid'):  # Hide content for paid posts
                     post['body'] = None  # Hide body text
                     if post['image']:
-                        post['image'] = 'hidden image'
+                        post['image'] = settings.PLATFORM_LOCKED_CONTENT  # Use locked content image
                     else:
                         post['image'] = None  # Hide image (optional)
                     post['title'] = "Locked Content"  # Display lock indicator on frontend                       
