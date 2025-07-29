@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'some-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 # print(os.environ.get("ACCESS_TOKEN_LIFETIME"))
 ACCESS_TOKEN_LIFETIME = int(os.environ.get("ACCESS_TOKEN_LIFETIME", 86400).strip()) 
 
@@ -87,11 +87,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv("POSTGRES_DB"),  # Replace with your PostgreSQL database name
-        'USER': os.getenv("POSTGRES_USER"),      # Replace with your PostgreSQL username
-        'PASSWORD': os.getenv("POSTGRES_PASSWORD"),  # Replace with your PostgreSQL password
-        'HOST': 'localhost',
-        'PORT': '5432',               # Default PostgreSQL port
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': os.environ.get('POSTGRES_HOST'),
+        'PORT': os.environ.get('POSTGRES_PORT'),
     }
 }
 
