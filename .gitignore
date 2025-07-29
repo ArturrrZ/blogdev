@@ -85,3 +85,5 @@ Desktop.ini
 
 # Optional if you're using Docker
 docker-compose.override.yml
+backend/staticfiles/
+/data
