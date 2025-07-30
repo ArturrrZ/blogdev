@@ -2,6 +2,8 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from django.db import connection
+from django.db.utils import OperationalError
 
 
 def main():
@@ -19,4 +21,14 @@ def main():
 
 
 if __name__ == '__main__':
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+    while True:
+        try:
+            connection.ensure_connection()
+            print("Database connection established.")
+            break
+        except OperationalError:
+            print("Database connection failed. Retrying...")
+            import time
+            time.sleep(1)
     main()
