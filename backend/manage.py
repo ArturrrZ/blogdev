@@ -4,7 +4,7 @@ import os
 import sys
 from django.db import connection
 from django.db.utils import OperationalError
-
+import time
 
 def main():
     """Run administrative tasks."""
@@ -29,6 +29,5 @@ if __name__ == '__main__':
             break
         except OperationalError:
             print("Database connection failed. Retrying...")
-            import time
             time.sleep(1)
     main()
