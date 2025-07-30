@@ -6,7 +6,7 @@ services:
       - ./data/db:/var/lib/postgresql/data
     env_file:
       - .env
-    container_name: postgres_db_dev 
+    container_name: postgres_db_prod 
   backend:
     build:
       context: ./backend 
@@ -14,9 +14,9 @@ services:
       - ./backend:/django
     ports:
       - "8000:8000"
-    image: blog_backend_dev
-    container_name: blog_backend_dev
-    command: python manage.py runserver 0.0.0.0:8000
+    image: blog_backend_prod
+    container_name: blog_backend_prod
+    command: gunicorn backend.wsgi --bind 0.0.0.0:8000
     env_file:
       - .env
     depends_on:
@@ -25,13 +25,21 @@ services:
     build:
       context: ./frontend 
     volumes:
-      - ./frontend:/react
-      - /react/node_modules
-    ports:
-      - "3000:3000"
-    image: blog_frontend_dev
-    container_name: blog_frontend_dev
-    command: npm run dev -- --host
+      - reactbuildblog1:/react/dist
+    image: blog_frontend_prod
+    container_name: blog_frontend_prod
     env_file:
       - .env
-    
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx-setup.conf:/etc/nginx/conf.d/default.conf:ro
+      - reactbuildblog1:/var/www/react
+    ports:
+      - "80:80"
+    container_name: nginx_prod1
+    depends_on:
+      - frontend
+      - backend  
+volumes:
+  reactbuildblog1:      
