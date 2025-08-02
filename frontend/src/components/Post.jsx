@@ -121,7 +121,7 @@ function Post(props) {
       {locked&&(data.image && 
       <img 
       className='post_img' 
-      src={import.meta.env.VITE_API_URL + data.image}
+      src={__HOST_URL__ + data.image}
       alt='locked image'
       />)}
       <Dialog

@@ -10,8 +10,8 @@ async function updateAccessToken() {
     } 
 }
 
-const baseURLback = import.meta.env.VITE_API_URL
-const baseURLfront = import.meta.env.VITE_HOST_URL
+const baseURLback = __API_URL__ || import.meta.env.VITE_API_URL || "http://localhost/"
+const baseURLfront = __HOST_URL__ || import.meta.env.VITE_HOST_URL || "http://localhost/"
 
 const api = axios.create({
     baseURL: baseURLback,

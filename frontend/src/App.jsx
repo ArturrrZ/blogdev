@@ -85,7 +85,7 @@ function App() {
         <Route path='/post/edit/:id/' element={<CreatorRoute><EditPost/></CreatorRoute>}/>
         <Route path='/notifications/' element={<ProtectedRoute><NotificationsPage/></ProtectedRoute>}/>
         <Route path='/404' element={<NotFound/>}/>
-        {/* {<Route path='*' element={<NotFound/>}/> */}
+        <Route path='*' element={<NotFound/>}/>
       </Routes>
       </div>
     </BrowserRouter>

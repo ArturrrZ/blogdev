@@ -24,9 +24,9 @@ services:
       - db  
   frontend:
     build:
-      context: ./frontend 
+      context: ./frontend
     volumes:
-      - reactbuildblog1:/react/dist
+      - reactbuildblog2:/react/dist
     image: blog_frontend_prod
     container_name: blog_frontend_prod
     env_file:
@@ -35,7 +35,7 @@ services:
     image: nginx:latest
     volumes:
       - ./nginx/nginx-setup.conf:/etc/nginx/conf.d/default.conf:ro
-      - reactbuildblog1:/var/www/react
+      - reactbuildblog2:/var/www/react
       - django_static:/var/www/django_static/
     ports:
       - "80:80"
@@ -44,5 +44,5 @@ services:
       - frontend
       - backend  
 volumes:
-  reactbuildblog1:
+  reactbuildblog2:
   django_static:      
