@@ -19,15 +19,16 @@ def main():
         ) from exc
     execute_from_command_line(sys.argv)
 
-
+attempts = 0
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
-    while True:
+    while attempts < 10:
         try:
             connection.ensure_connection()
             print("Database connection established.")
             break
         except OperationalError:
             print("Database connection failed. Retrying...")
+            attempts += 1
             time.sleep(1)
     main()
