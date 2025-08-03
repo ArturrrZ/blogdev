@@ -13,6 +13,7 @@ services:
     volumes:
       - ./backend:/django
       - django_static:/django/staticfiles
+      - django_uploads:/django/uploads
     expose:
       - "8000"
     image: blog_backend_prod
@@ -29,14 +30,13 @@ services:
       - reactbuildblog2:/react/dist
     image: blog_frontend_prod
     container_name: blog_frontend_prod
-    env_file:
-      - .env
   nginx:
     image: nginx:latest
     volumes:
       - ./nginx/nginx-setup.conf:/etc/nginx/conf.d/default.conf:ro
       - reactbuildblog2:/var/www/react
       - django_static:/var/www/django_static/
+      - django_uploads:/var/www/django_uploads/
     ports:
       - "80:80"
     container_name: nginx_prod1
@@ -45,4 +45,5 @@ services:
       - backend  
 volumes:
   reactbuildblog2:
-  django_static:      
+  django_static:
+  django_uploads:      
