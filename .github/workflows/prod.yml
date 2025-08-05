@@ -11,8 +11,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest  # use the latest Ubuntu runner
     env:
-      STRIPE_SECRET_KEY: some-secret-key 
-      STRIPE_PUBLISHABLE_KEY: some-publishable-key  
+      STRIPE_SECRET_KEY: some-secret-key
+      STRIPE_PUBLISHABLE_KEY: some-publishable-key
+      STRIPE_WEBHOOK_SECRET: some-webhook-secret
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
