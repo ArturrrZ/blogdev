@@ -1,29 +1,40 @@
-# Personal Blog — Dev Mode
+# Personal Blog - Dev Mode
+A subscription-based social media platform where creators share exclusive content and users subscribe to enjoy it.
+<br>Full-stack application built with **Django**, **React**, and **Stripe** for seamless payment processing.
+## 🔧 Tech Stack:
+**Frontend:** React, JavaScript, HTML, CSS, Material UI<br>
+**Backend:** Django, Python, PostgreSQL<br>
+**Other Tools:** Docker, Stripe CLI, JWT Authentication, Django Email Engine<br>
+## 💡 Project Overview
+I was inspired by platforms like Fansly, Patreon, and Boosty, this project enables content creators to monetize their content through monthly subscriptions. Payments are handled via Stripe, integrated using the Stripe CLI.
+Authentication is managed using JWT tokens, securely stored in cookies by Django. The frontend leverages Material UI to build clean, responsive user interfaces.
+<br>
+Real-time notifications for creators (e.g., new subscribers, likes, reports).
+Email notifications for customers with subscription details using Django’s built-in email engine.
 
-Full-stack web application built with **Django** (backend), **React** (frontend), and **Stripe** for payments.  
-Development and deployment are managed via **Docker**.
+##  🚀 Lessons Learned
 
----
+- I deepened my understanding of integrating external APIs by working closely with Stripe to manage recurring payments and webhooks.
 
-## Features
+- Strengthened my understanding of secure authentication using JWT tokens stored in cookies, ensuring both safety and usability without relying on localStorage.
 
-- Django REST API backend
-- React frontend (Vite + MUI)
-- Stripe payment integration
-- JWT authentication for secure API access
-- Dockerized dev environment
-- Hot reload for backend and frontend
-- Environment variables for easy config
+- Wrote automated tests using Django’s TestCase and DRF’s APIClient, simulating multiple user roles (creators, subscribers, regular users).
 
----
+- Practiced managing global app context and user roles in React to support different user experiences (creator vs. subscriber vs regular user).
+
+- Gained hands-on experience with Docker for containerizing the app and preparing it for production environments.
+
+- Developed a better mindset for end-to-end product thinking — from secure user onboarding to smooth subscription flows and user notifications.
+
+This project wasn’t just about writing code — it was about thinking like a product engineer and building something I’d be confident deploying in the real world.
+
 
 ## Prerequisites
 
 - [Docker](https://www.docker.com/get-started)
 - [Docker Compose](https://docs.docker.com/compose/)
-
+- [Stripe CLI](https://docs.stripe.com/stripe-cli)
 ---
-
 ## Getting Started
 
 ### 1. Clone the repository
