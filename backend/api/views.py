@@ -445,8 +445,8 @@ class CheckoutSessionView(APIView):
                 },
                 mode='subscription',
                 success_url=YOUR_DOMAIN +
-                f'success/',
-                cancel_url=YOUR_DOMAIN + 'cancel/',
+                f'api/success/',
+                cancel_url=YOUR_DOMAIN + 'api/cancel/',
             )
             return Response({"checkout_url": checkout_session.url}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -614,7 +614,7 @@ class LoginLogoutView(APIView):
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
         response = Response({
-            "message":"You logged in!", "username": user.username, "is_creator": user.is_creator
+            "message":"You logged in!", "username": user.username, "is_creator": user.is_creator, "notifications_count": Notification.objects.filter(user=user, is_read=False).count(), "is_authenticated": True
             }, status=status.HTTP_200_OK)
         response.set_cookie(
             key="access_token",

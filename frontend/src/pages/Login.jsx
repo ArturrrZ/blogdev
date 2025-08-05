@@ -7,7 +7,7 @@ import "../styles/login.css"
 import { AuthContext } from '../AuthContext';
 
 function Login() {
-    const {setAuthenticated, setCreator, setUser} = useContext(AuthContext);
+    const {setAuthenticated, setCreator, setUser, setNotifications} = useContext(AuthContext);
     const navigate = useNavigate()
     const [login, setLogin] = useState("")
     function handleLoginChange(e){
@@ -24,8 +24,9 @@ function Login() {
             password: password
         })
         .then(response=>{
-            console.log(response.data)
+            // console.log(response.data)
             setAuthenticated(true)
+            setNotifications(response.data.notifications_count);
             setUser(response.data.username)
             // console.log(response.data)
             if (response.data.is_creator) {

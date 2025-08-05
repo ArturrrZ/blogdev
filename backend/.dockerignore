@@ -35,3 +35,6 @@ Thumbs.db
 # Media/static if generated locally
 media/
 staticfiles/
+*.sqlite3
+uploads/
+images/
