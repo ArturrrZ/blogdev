@@ -1,5 +1,5 @@
----------------DEV MODE with Docker------------------------
+---------------PROD MODE with Docker------------------------
 stripe login ..
-stripe listen --forward-to localhost:8000/api/webhooks/stripe/
+stripe listen --forward-to localhost:80/api/webhooks/stripe/
 - get the api key and put into .env
-docker compose up --build
+docker compose -f docker-compose.prod.yml up --build

@@ -7,6 +7,8 @@ on:
       - prod-mode  # branch to trigger the workflow
     paths-ignore:
       - 'README.md'
+      - '.github/workflows/prod.yml'  # ignore changes to this workflow file
+      - 'commands.txt'
 
 jobs:
   deploy:
