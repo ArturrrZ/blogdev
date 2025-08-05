@@ -2,23 +2,11 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-from django.db import connection
-from django.db.utils import OperationalError
-import time
+
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
-    attempts = 0
-    while attempts < 10:
-        try:
-            connection.ensure_connection()
-            print("Database connection established.")
-            break
-        except OperationalError:
-            print("Database connection failed. Retrying...")
-            attempts += 1
-            time.sleep(1)
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.test_settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

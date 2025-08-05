@@ -27,7 +27,7 @@ function MediaPost(props) {
             width={'200px'}
             height={'200px'} 
             className='post_media_img' 
-            src={import.meta.env.VITE_API_URL + data.image}
+            src={data.image}
             alt='locked image'
             />}
             <Dialog
