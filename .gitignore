@@ -21,7 +21,7 @@ env/
 
 # Static and media files (if managed locally)
 media/
-static/
+
 backend/uploads
 backend/images
 # Django specific files
