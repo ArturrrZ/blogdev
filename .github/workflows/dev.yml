@@ -13,7 +13,7 @@ on:
       - '.gitignore'
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest  # use the latest Ubuntu runner
     env:
       STRIPE_SECRET_KEY: some-secret-key
