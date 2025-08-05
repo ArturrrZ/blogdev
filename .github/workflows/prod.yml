@@ -12,25 +12,30 @@ jobs:
     runs-on: ubuntu-latest  # use the latest Ubuntu runner
 
     steps:
-    # Step 1: Checkout the repository
     - name: Checkout repository
       uses: actions/checkout@v4
-    # Step 1.1: Convert shallow clone to full
+
     - name: Convert shallow clone to full
       run: git fetch --all --unshallow
-    # Step 2: Set up Python
+
+    - name: Install tree
+      run: sudo apt-get install tree
+
+    - name: Show prod-mode branch tree
+      run: |
+        git checkout prod-mode
+        tree -a -L 2
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
 
-    # Step 3: Install dependencies
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r backend/requirements.txt
 
-    # Step 4: Run tests
     - name: Run tests with pytest
       run: |
         python backend/test_manage.py test
