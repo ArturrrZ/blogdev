@@ -1,4 +1,5 @@
-name: Test and Deploy to DockerHub
+name: Prod Tests Workflow
+# This workflow runs tests on the prod-mode branch without deploying
 
 on:
   push:
